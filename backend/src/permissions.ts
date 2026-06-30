@@ -20,3 +20,18 @@ export const CAN_MANAGE_PROJECTS = ['ADMIN', 'PM'] as const
 
 /** Roles allowed to delete tasks (destructive). */
 export const CAN_DELETE_TASKS = ['ADMIN', 'PM'] as const
+
+/**
+ * RBAC-6: who may edit (PATCH) a task.
+ * ADMIN and PM can edit any task; everyone else may only edit a task they
+ * created or that is assigned to them. Prevents one team member from silently
+ * changing another's task.
+ */
+export function canEditTask(
+  task: { creatorId: string; assigneeId: string | null },
+  userId: string,
+  role: string
+): boolean {
+  if (role === 'ADMIN' || role === 'PM') return true
+  return task.creatorId === userId || task.assigneeId === userId
+}

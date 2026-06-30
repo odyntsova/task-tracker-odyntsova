@@ -36,6 +36,9 @@ const tokenFor = (role: string) => jwt.sign({ userId: 'user-1', role }, 'test-se
 const auth = (req: request.Test) => req.set('Authorization', `Bearer ${tokenFor('QA')}`)
 const authAs = (role: string, req: request.Test) =>
   req.set('Authorization', `Bearer ${tokenFor(role)}`)
+// Sign a token for an arbitrary user id (to simulate non-owners) — RBAC-6.
+const authAsUser = (userId: string, role: string, req: request.Test) =>
+  req.set('Authorization', `Bearer ${jwt.sign({ userId, role }, 'test-secret')}`)
 
 const sampleTask = () => ({
   id: 'task-1',
@@ -131,6 +134,54 @@ describe('PATCH /api/tasks/:id', () => {
     mockTaskUpdate.mockResolvedValue(sampleTask())
 
     const res = await auth(request(app).patch('/api/tasks/task-1')).send({})
+
+    expect(res.status).toBe(200)
+  })
+
+  // --- RBAC-6: who may edit a task ---------------------------------------
+
+  it('lets the creator edit their own task (200)', async () => {
+    // sampleTask.creatorId === 'user-1'; default token is user-1
+    mockTaskFindUnique.mockResolvedValue(sampleTask())
+    mockTaskUpdate.mockResolvedValue({ ...sampleTask(), status: 'IN_PROGRESS' })
+
+    const res = await authAsUser('user-1', 'DEVELOPER', request(app).patch('/api/tasks/task-1')).send({
+      status: 'IN_PROGRESS',
+    })
+
+    expect(res.status).toBe(200)
+  })
+
+  it('lets the assignee edit the task (200)', async () => {
+    mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), creatorId: 'someone-else', assigneeId: 'user-2' })
+    mockTaskUpdate.mockResolvedValue({ ...sampleTask(), status: 'IN_PROGRESS' })
+
+    const res = await authAsUser('user-2', 'QA', request(app).patch('/api/tasks/task-1')).send({
+      status: 'IN_PROGRESS',
+    })
+
+    expect(res.status).toBe(200)
+  })
+
+  it('forbids a non-owner DEVELOPER/QA from editing (403, no update)', async () => {
+    mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), creatorId: 'owner', assigneeId: 'someone' })
+
+    const res = await authAsUser('intruder', 'DEVELOPER', request(app).patch('/api/tasks/task-1')).send({
+      status: 'IN_PROGRESS',
+    })
+
+    expect(res.status).toBe(403)
+    expect(res.body.error).toBe('Forbidden')
+    expect(mockTaskUpdate).not.toHaveBeenCalled()
+  })
+
+  it('lets a PM edit any task even if not owner/assignee (200)', async () => {
+    mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), creatorId: 'owner', assigneeId: 'someone' })
+    mockTaskUpdate.mockResolvedValue(sampleTask())
+
+    const res = await authAsUser('pm-user', 'PM', request(app).patch('/api/tasks/task-1')).send({
+      priority: 'HIGH',
+    })
 
     expect(res.status).toBe(200)
   })

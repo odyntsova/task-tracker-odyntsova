@@ -66,6 +66,44 @@ describe('Integration: status transitions on real data', () => {
   })
 })
 
+describe('Integration: RBAC-6 task edit ownership on real data', () => {
+  it('forbids a non-owner DEVELOPER from editing someone else\'s task (403)', async () => {
+    const owner = await createUser('DEVELOPER', 'owner@example.com')
+    await createUser('DEVELOPER', 'intruder@example.com')
+    const intruderToken = await loginToken('intruder@example.com')
+    const project = await prisma.project.create({ data: { name: 'P' } })
+    const task = await prisma.task.create({
+      data: { title: 'Owned task', status: 'TODO', projectId: project.id, creatorId: owner.id },
+    })
+
+    const res = await request(app)
+      .patch(`/api/tasks/${task.id}`)
+      .set('Authorization', `Bearer ${intruderToken}`)
+      .send({ status: 'IN_PROGRESS' })
+
+    expect(res.status).toBe(403)
+    const stored = await prisma.task.findUnique({ where: { id: task.id } })
+    expect(stored!.status).toBe('TODO') // unchanged
+  })
+
+  it('lets a PM edit any task (200)', async () => {
+    const owner = await createUser('DEVELOPER', 'owner@example.com')
+    await createUser('PM', 'pm@example.com')
+    const pmToken = await loginToken('pm@example.com')
+    const project = await prisma.project.create({ data: { name: 'P' } })
+    const task = await prisma.task.create({
+      data: { title: 'Owned task', status: 'TODO', projectId: project.id, creatorId: owner.id },
+    })
+
+    const res = await request(app)
+      .patch(`/api/tasks/${task.id}`)
+      .set('Authorization', `Bearer ${pmToken}`)
+      .send({ status: 'IN_PROGRESS' })
+
+    expect(res.status).toBe(200)
+  })
+})
+
 describe('Integration: assignee existence on real data', () => {
   it('assigns a task to an existing user', async () => {
     const dev = await createUser('DEVELOPER', 'dev@example.com')

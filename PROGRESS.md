@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~57%** (29/52 тікети). Auth + Tasks + Sprints — повний зріз (backend + UI + тести) + Kanban + rate limiting + **PostgreSQL**. 126 автотестів (80 unit + 25 integration + 21 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~59%** (30/52 тікети). Auth + Tasks + Sprints — повний зріз + Kanban + rate limiting + PostgreSQL + RBAC (вкл. ownership на редагування задач). 132 автотести (84 unit + 27 integration + 21 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -73,7 +73,7 @@ _Останнє оновлення: 2026-06-30_
 | TASK-7 | Історія змін задачі (audit log) | Low | L | ⬜ |
 | TASK-8 | `GET /api/users` (для дропдаунів assignee, без passwordHash) | Medium | S | ✅ |
 
-### EPIC 3 — RBAC (ролі та права) · готовність ~10%
+### EPIC 3 — RBAC (ролі та права) · готовність ~95%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | RBAC-1 | Middleware `requireRole` написано | High | S | ✅ |
@@ -81,7 +81,7 @@ _Останнє оновлення: 2026-06-30_
 | RBAC-3 | Матриця прав по ролях — `src/permissions.ts` | High | S | ✅ |
 | RBAC-4 | Тести на permission boundaries (403 для DEVELOPER/QA) + e2e перевірка | High | M | ✅ |
 | RBAC-5 | Адмін-панель: керування юзерами та ролями | Medium | L | ⬜ |
-| RBAC-6 | Розширити RBAC: "тільки assignee/creator може редагувати задачу" | Medium | M | ⬜ |
+| RBAC-6 | Тільки creator/assignee/ADMIN/PM може редагувати задачу (`canEditTask`) — 403 для решти | Medium | M | ✅ |
 
 ### EPIC 4 — Frontend · готовність ~25%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
@@ -121,7 +121,7 @@ _Останнє оновлення: 2026-06-30_
 ### EPIC 8 — Testing & QA infrastructure · готовність ~30%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (80, 6 сьют): auth, tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (84, 6 сьют): auth, tasks, projects, users, sprints, RBAC (вкл. edit-ownership), transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
 | QA-4 | Integration-тести проти реальної SQLite БД (25 тестів: constraint, RBAC, пагінація, переходи, assignee, фільтри, users, sprints, sprint-assign) | High | M | ✅ |
@@ -156,7 +156,8 @@ _Останнє оновлення: 2026-06-30_
 13. ~~**SPRINT-2** — Kanban-дошка (drag&drop)~~ ✅
 14. ~~**AUTH-5** — rate limiting~~ ✅
 15. ~~**OPS-1** — перехід на PostgreSQL~~ ✅
-16. Далі: **AUTH-3** refresh-токени, **AUTH-4** реальний logout, **SPRINT-4** burndown, **RBAC-6** assignee-only edit, **OPS-3** Dockerfile 👈 наступне
+16. ~~**RBAC-6** — ownership на редагування задач~~ ✅
+17. Далі: **AUTH-3** refresh-токени, **AUTH-4** реальний logout, **SPRINT-4** burndown, **OPS-3** Dockerfile, епіки Notifications/Reporting 👈 наступне
 
 ---
 

@@ -2,7 +2,7 @@ import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import { z } from 'zod'
 import { requireAuth, requireRole, AuthRequest } from '../middleware/auth'
-import { CAN_DELETE_TASKS } from '../permissions'
+import { CAN_DELETE_TASKS, canEditTask } from '../permissions'
 import { canTransition, TaskStatus } from '../taskStatus'
 
 export const tasksRouter = Router()
@@ -42,6 +42,12 @@ tasksRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   const task = await prisma.task.findUnique({ where: { id: req.params.id } })
   if (!task) {
     res.status(404).json({ data: null, error: 'Task not found' })
+    return
+  }
+
+  // RBAC-6: only the creator, the assignee, or ADMIN/PM may edit a task.
+  if (!canEditTask(task, req.userId!, req.userRole!)) {
+    res.status(403).json({ data: null, error: 'Forbidden' })
     return
   }
 

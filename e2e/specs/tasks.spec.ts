@@ -93,7 +93,12 @@ test.describe('Tasks page — inline edit (FE-4)', () => {
     await page.goto(`/projects/${projectId}/tasks`)
 
     const assigneeSelect = rowByText(page, 'Alpha login task').locator('select').nth(2)
+    // wait for the assignment PATCH to persist before filtering (avoid a race)
+    const patched = page.waitForResponse(
+      (r) => r.request().method() === 'PATCH' && /\/api\/tasks\//.test(r.url())
+    )
     await assigneeSelect.selectOption({ label: ASSIGNEE_LABEL })
+    await patched
 
     // filter by that assignee — only the Alpha task should remain
     await page.getByTestId('filter-assignee').selectOption({ label: ASSIGNEE_LABEL })
@@ -106,11 +111,15 @@ test.describe('Tasks page — inline edit (FE-4)', () => {
     const projectId = await setupProject(request, page)
     await page.goto(`/projects/${projectId}/tasks`)
 
-    // assign Alpha, leave Beta unassigned
+    // assign Alpha, leave Beta unassigned (wait for the PATCH to persist)
+    const patched = page.waitForResponse(
+      (r) => r.request().method() === 'PATCH' && /\/api\/tasks\//.test(r.url())
+    )
     await rowByText(page, 'Alpha login task')
       .locator('select')
       .nth(2)
       .selectOption({ label: ASSIGNEE_LABEL })
+    await patched
 
     await page.getByTestId('filter-assignee').selectOption('unassigned')
 

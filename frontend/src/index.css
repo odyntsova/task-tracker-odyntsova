@@ -190,6 +190,9 @@ td {
   padding: 0;
   margin: 0;
   flex: 1; /* fill the column so all columns are equal height */
+  /* keep large columns (100+ tickets) usable: scroll inside the column */
+  max-height: 65vh;
+  overflow-y: auto;
 }
 
 /* ticket cards */

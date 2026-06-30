@@ -41,6 +41,13 @@ export interface Sprint {
   projectId: string
 }
 
+export interface Comment {
+  id: string
+  body: string
+  createdAt: string
+  author: { id: string; name: string; role: UserRole }
+}
+
 export type NotificationType = 'TASK_ASSIGNED' | 'TASK_STATUS_CHANGED'
 
 export interface Notification {

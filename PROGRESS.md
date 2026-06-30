@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~74%** (42/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 177 автотестів (111 unit + 37 integration + 29 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~75%** (43/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 185 автотестів (117 unit + 38 integration + 30 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -61,7 +61,7 @@ _Останнє оновлення: 2026-06-30_
 | AUTH-6 | Скидання/зміна пароля (forgot password flow) | Low | L | ⬜ |
 | AUTH-7 | Підтвердження email | Low | M | ⬜ |
 
-### EPIC 2 — Tasks & Projects API · готовність ~80%
+### EPIC 2 — Tasks & Projects API · готовність ~90%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | TASK-1 | CRUD-роути tasks та projects | High | M | ✅ |
@@ -69,7 +69,7 @@ _Останнє оновлення: 2026-06-30_
 | TASK-3 | Валідація переходів статусів — `src/taskStatus.ts` (state machine) | Medium | M | ✅ |
 | TASK-4 | Призначення задач + перевірка існування юзера (422 якщо нема) | Medium | S | ✅ |
 | TASK-5 | Фільтри (status/priority/assignee/unassigned) + пошук + сортування + фікс meta.total | Medium | M | ✅ |
-| TASK-6 | Коментарі до задач | Low | M | ⬜ |
+| TASK-6 | Коментарі до задач: GET/POST /tasks/:id/comments + TaskDetailPage | Low | M | ✅ |
 | TASK-7 | Історія змін задачі (audit log) | Low | L | ⬜ |
 | TASK-8 | `GET /api/users` (для дропдаунів assignee, без passwordHash) | Medium | S | ✅ |
 
@@ -124,11 +124,11 @@ _Останнє оновлення: 2026-06-30_
 ### EPIC 8 — Testing & QA infrastructure · готовність ~85%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (111, 7 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (117, 7 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
-| QA-4 | Integration-тести проти реальної PostgreSQL БД (37 тестів: + role mgmt) | High | M | ✅ |
-| QA-5 | Playwright e2e (29 тестів): + admin panel | Medium | L | ✅ |
+| QA-4 | Integration-тести проти реальної PostgreSQL БД (38 тестів: + comments) | High | M | ✅ |
+| QA-5 | Playwright e2e (30 тестів): + comments | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги в CI (80% backend) | Low | S | ⬜ |
 
@@ -167,7 +167,8 @@ _Останнє оновлення: 2026-06-30_
 21. ~~**Reporting** епік (REP-1/2/3)~~ ✅
 22. ~~**OPS-3** Dockerfile/compose~~ ✅ (написано; локально не збиралось — Docker не встановлено в dev-середовищі)
 23. ~~**RBAC-5** адмін-панель~~ ✅ (EPIC RBAC 100%)
-24. Далі: **TASK-6** коментарі, **QA-7** coverage-пороги, NOTIF-3 email, AUTH-6 reset password 👈 наступне
+24. ~~**TASK-6** коментарі~~ ✅
+25. Далі: **QA-7** coverage-пороги, NOTIF-3 email, AUTH-6 reset password, TASK-7 audit log, FE-7 дизайн 👈 наступне
 
 ---
 

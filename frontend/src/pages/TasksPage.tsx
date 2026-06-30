@@ -180,7 +180,9 @@ export function TasksPage() {
         <ul data-testid="tasks-list">
           {tasks.map((task) => (
             <li key={task.id} data-testid={`task-item-${task.id}`}>
-              <span data-testid="task-title">{task.title}</span>
+              <Link data-testid={`task-link-${task.id}`} to={`/projects/${projectId}/tasks/${task.id}`}>
+                {task.title}
+              </Link>
 
               <select
                 data-testid={`task-status-${task.id}`}

@@ -6,6 +6,7 @@ import { app } from '../../src/app'
 const prisma = new PrismaClient()
 
 async function cleanDb() {
+  await prisma.comment.deleteMany()
   await prisma.task.deleteMany()
   await prisma.refreshToken.deleteMany()
   await prisma.notification.deleteMany()
@@ -142,5 +143,30 @@ describe('Integration: assignee existence on real data', () => {
     expect(res.status).toBe(422)
     const stored = await prisma.task.findUnique({ where: { id: task.id } })
     expect(stored!.assigneeId).toBeNull()
+  })
+})
+
+describe('Integration: task comments (TASK-6)', () => {
+  it('adds a comment (author from token) and lists it', async () => {
+    const dev = await createUser('DEVELOPER', 'dev@example.com')
+    const token = await loginToken('dev@example.com')
+    const project = await prisma.project.create({ data: { name: 'P' } })
+    const task = await prisma.task.create({
+      data: { title: 'T', projectId: project.id, creatorId: dev.id },
+    })
+
+    const created = await request(app)
+      .post(`/api/tasks/${task.id}/comments`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ body: 'First!' })
+    expect(created.status).toBe(201)
+    expect(created.body.data.author.id).toBe(dev.id)
+
+    const list = await request(app)
+      .get(`/api/tasks/${task.id}/comments`)
+      .set('Authorization', `Bearer ${token}`)
+    expect(list.status).toBe(200)
+    expect(list.body.data).toHaveLength(1)
+    expect(list.body.data[0].body).toBe('First!')
   })
 })

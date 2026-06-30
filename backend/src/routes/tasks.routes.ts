@@ -138,3 +138,42 @@ tasksRouter.delete('/:id', requireAuth, requireRole(...CAN_DELETE_TASKS), async 
   await prisma.task.delete({ where: { id: req.params.id } })
   res.status(204).send()
 })
+
+// --- Comments (TASK-6) -----------------------------------------------------
+
+const createCommentSchema = z.object({ body: z.string().min(1).max(2000) })
+
+tasksRouter.get('/:id/comments', requireAuth, async (req, res) => {
+  const task = await prisma.task.findUnique({ where: { id: req.params.id } })
+  if (!task) {
+    res.status(404).json({ data: null, error: 'Task not found' })
+    return
+  }
+
+  const comments = await prisma.comment.findMany({
+    where: { taskId: req.params.id },
+    include: { author: { select: { id: true, name: true, role: true } } },
+    orderBy: { createdAt: 'asc' },
+  })
+  res.json({ data: comments, error: null })
+})
+
+tasksRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) => {
+  const task = await prisma.task.findUnique({ where: { id: req.params.id } })
+  if (!task) {
+    res.status(404).json({ data: null, error: 'Task not found' })
+    return
+  }
+
+  const parsed = createCommentSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(422).json({ data: null, error: 'Invalid input' })
+    return
+  }
+
+  const comment = await prisma.comment.create({
+    data: { body: parsed.data.body, taskId: req.params.id, authorId: req.userId! },
+    include: { author: { select: { id: true, name: true, role: true } } },
+  })
+  res.status(201).json({ data: comment, error: null })
+})

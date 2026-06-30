@@ -8,6 +8,8 @@ const mockTaskDelete = jest.fn()
 const mockUserFindUnique = jest.fn()
 const mockSprintFindUnique = jest.fn()
 const mockNotificationCreate = jest.fn()
+const mockCommentFindMany = jest.fn()
+const mockCommentCreate = jest.fn()
 
 jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => ({
@@ -24,6 +26,7 @@ jest.mock('@prisma/client', () => ({
     sprint: { findUnique: mockSprintFindUnique, findMany: jest.fn(), create: jest.fn() },
     user: { findUnique: mockUserFindUnique, create: jest.fn() },
     notification: { create: mockNotificationCreate },
+    comment: { findMany: mockCommentFindMany, create: mockCommentCreate },
     $transaction: jest.fn(),
   })),
 }))
@@ -62,6 +65,8 @@ beforeEach(() => {
   mockSprintFindUnique.mockReset()
   mockNotificationCreate.mockReset()
   mockNotificationCreate.mockResolvedValue({ id: 'notif-1' })
+  mockCommentFindMany.mockReset()
+  mockCommentCreate.mockReset()
 })
 
 // --- Auth guard ----------------------------------------------------------
@@ -425,5 +430,57 @@ describe('Notifications generated on task changes (NOTIF-1/2)', () => {
         data: expect.objectContaining({ userId: assignee, type: 'TASK_STATUS_CHANGED' }),
       })
     )
+  })
+})
+
+describe('Task comments (TASK-6)', () => {
+  it('lists comments for an existing task', async () => {
+    mockTaskFindUnique.mockResolvedValue(sampleTask())
+    mockCommentFindMany.mockResolvedValue([{ id: 'c1', body: 'hi', author: { id: 'user-1', name: 'K' } }])
+
+    const res = await auth(request(app).get('/api/tasks/task-1/comments'))
+
+    expect(res.status).toBe(200)
+    expect(res.body.data).toHaveLength(1)
+  })
+
+  it('returns 404 listing comments for a missing task', async () => {
+    mockTaskFindUnique.mockResolvedValue(null)
+    const res = await auth(request(app).get('/api/tasks/ghost/comments'))
+    expect(res.status).toBe(404)
+    expect(mockCommentFindMany).not.toHaveBeenCalled()
+  })
+
+  it('creates a comment with the author taken from the token', async () => {
+    mockTaskFindUnique.mockResolvedValue(sampleTask())
+    mockCommentCreate.mockResolvedValue({ id: 'c1', body: 'nice', author: { id: 'user-1', name: 'K' } })
+
+    const res = await auth(request(app).post('/api/tasks/task-1/comments')).send({ body: 'nice' })
+
+    expect(res.status).toBe(201)
+    expect(mockCommentCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ body: 'nice', taskId: 'task-1', authorId: 'user-1' }),
+      })
+    )
+  })
+
+  it('returns 422 on an empty comment body', async () => {
+    mockTaskFindUnique.mockResolvedValue(sampleTask())
+    const res = await auth(request(app).post('/api/tasks/task-1/comments')).send({ body: '' })
+    expect(res.status).toBe(422)
+    expect(mockCommentCreate).not.toHaveBeenCalled()
+  })
+
+  it('returns 404 commenting on a missing task', async () => {
+    mockTaskFindUnique.mockResolvedValue(null)
+    const res = await auth(request(app).post('/api/tasks/ghost/comments')).send({ body: 'x' })
+    expect(res.status).toBe(404)
+    expect(mockCommentCreate).not.toHaveBeenCalled()
+  })
+
+  it('requires authentication', async () => {
+    const res = await request(app).get('/api/tasks/task-1/comments')
+    expect(res.status).toBe(401)
   })
 })

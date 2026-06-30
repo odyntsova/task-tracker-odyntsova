@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { ApiResponse, AuthTokens, User, Task, TaskStatus, TaskPriority, Project, Sprint, Notification } from '@/types'
+import type { ApiResponse, AuthTokens, User, Task, TaskStatus, TaskPriority, Project, Sprint, Notification, Comment } from '@/types'
 
 const http = axios.create({
   baseURL: '/api',
@@ -124,6 +124,10 @@ export const tasksApi = {
   update: (id: string, data: TaskUpdate) => http.patch<ApiResponse<Task>>(`/tasks/${id}`, data),
 
   delete: (id: string) => http.delete(`/tasks/${id}`),
+
+  comments: (id: string) => http.get<ApiResponse<Comment[]>>(`/tasks/${id}/comments`),
+  addComment: (id: string, body: string) =>
+    http.post<ApiResponse<Comment>>(`/tasks/${id}/comments`, { body }),
 }
 
 export const usersApi = {

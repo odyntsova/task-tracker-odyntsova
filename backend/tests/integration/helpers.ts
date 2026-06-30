@@ -1,5 +1,5 @@
 import request from 'supertest'
-import bcrypt from 'bcryptjs'
+import { hash as argonHash } from '@node-rs/argon2'
 import jwt from 'jsonwebtoken'
 import { PrismaClient } from '@prisma/client'
 import { app } from '../../src/app'
@@ -23,7 +23,7 @@ export async function createVerifiedUser(email = 'user@example.com') {
   return prisma.user.create({
     data: {
       email,
-      passwordHash: await bcrypt.hash('password123', 10),
+      passwordHash: await argonHash('password123'),
       emailVerifiedAt: new Date(),
     },
   })

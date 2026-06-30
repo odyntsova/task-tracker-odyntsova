@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
-import bcrypt from 'bcryptjs'
+import { hash as argonHash, verify as argonVerify } from '@node-rs/argon2'
 import { z } from 'zod'
 import { requireAuth, AuthRequest } from '../middleware/auth'
 import { rateLimit } from '../middleware/rateLimit'
@@ -57,7 +57,7 @@ authRouter.post('/signup', authLimiter, async (req, res) => {
   }
 
   const user = await prisma.user.create({
-    data: { email, passwordHash: await bcrypt.hash(password, 10) },
+    data: { email, passwordHash: await argonHash(password) },
   })
   await sendVerificationEmail(user.id, user.email)
 
@@ -74,7 +74,7 @@ authRouter.post('/login', authLimiter, async (req, res) => {
   }
   const { email, password } = parsed.data
   const user = await prisma.user.findUnique({ where: { email } })
-  if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+  if (!user || !(await argonVerify(user.passwordHash, password))) {
     res.status(401).json({ data: null, error: 'Invalid email or password' })
     return
   }
@@ -204,7 +204,7 @@ authRouter.post('/reset-password', authLimiter, async (req, res) => {
     res.status(400).json({ data: null, error: 'Invalid or expired reset token' })
     return
   }
-  const passwordHash = await bcrypt.hash(parsed.data.password, 10)
+  const passwordHash = await argonHash(parsed.data.password)
   await prisma.$transaction([
     prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
     prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),

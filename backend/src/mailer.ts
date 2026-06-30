@@ -49,11 +49,48 @@ export function setEmailTransport(next: EmailTransport): void {
   transport = next
 }
 
-/** Best-effort send — never throws into the caller's request flow. */
-export async function sendEmail(message: EmailMessage): Promise<void> {
+// Backoff schedule for transient failures. Spans ~18 min so it rides out the
+// relay's greylisting window (a first send is often deferred with a 4xx).
+const RETRY_DELAYS_MS = [60_000, 180_000, 300_000, 600_000]
+
+const TRANSIENT_NET_CODES = new Set([
+  'ETIMEDOUT', 'ECONNRESET', 'ECONNREFUSED', 'EHOSTUNREACH', 'ENOTFOUND', 'ESOCKET', 'EAI_AGAIN',
+])
+
+// A failure is worth retrying when the relay deferred us (SMTP 4xx, e.g. 451
+// greylisting) or the connection itself faltered. A 5xx (e.g. 550) is a hard
+// rejection — retrying would only repeat it.
+export function isTransient(err: unknown): boolean {
+  const e = err as { responseCode?: number; code?: string }
+  if (typeof e?.responseCode === 'number') return e.responseCode >= 400 && e.responseCode < 500
+  return typeof e?.code === 'string' && TRANSIENT_NET_CODES.has(e.code)
+}
+
+async function attempt(message: EmailMessage, n: number): Promise<void> {
   try {
     await transport.send(message)
+    if (n > 0) console.log(`[email] delivered to ${message.to} on retry ${n}`)
   } catch (err) {
-    console.error('[email] delivery failed:', (err as Error).message)
+    const e = err as Error
+    // Retries run in the background (the request flow has already returned) and
+    // are skipped in tests to avoid leaking timers.
+    const canRetry =
+      isTransient(err) && n < RETRY_DELAYS_MS.length && process.env.NODE_ENV !== 'test'
+    const note = canRetry ? ` — retrying in ${RETRY_DELAYS_MS[n] / 1000}s` : ''
+    console.error(`[email] attempt ${n + 1} to ${message.to} failed: ${e.message}${note}`)
+    if (canRetry) {
+      const timer = setTimeout(() => void attempt(message, n + 1), RETRY_DELAYS_MS[n])
+      if (typeof timer.unref === 'function') timer.unref()
+    }
   }
+}
+
+/**
+ * Best-effort send — never throws and never blocks the caller's request flow.
+ * Delivery (and any backoff retries on transient failures like greylisting or
+ * connection blips) runs in the background; the endpoints return 200 regardless
+ * of delivery, so there's nothing for the request to wait on.
+ */
+export async function sendEmail(message: EmailMessage): Promise<void> {
+  void attempt(message, 0)
 }

@@ -1,6 +1,8 @@
 # --- build stage ---------------------------------------------------------
-FROM node:20-alpine AS build
+# Debian-slim (not alpine) so Prisma's engines find OpenSSL out of the box.
+FROM node:20-slim AS build
 WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 RUN npm ci
@@ -13,9 +15,10 @@ COPY src ./src
 RUN npm run build
 
 # --- runtime stage -------------------------------------------------------
-FROM node:20-alpine AS runtime
+FROM node:20-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 COPY prisma ./prisma

@@ -1,93 +1,41 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { useAuth } from '@/context/AuthContext'
+import { Layout } from '@/components/Layout'
+import { Loading } from '@/components/AsyncState'
 import { LoginPage } from '@/pages/LoginPage'
-import { RegisterPage } from '@/pages/RegisterPage'
-import { DashboardPage } from '@/pages/DashboardPage'
-import { TasksPage } from '@/pages/TasksPage'
-import { SprintsPage } from '@/pages/SprintsPage'
-import { KanbanPage } from '@/pages/KanbanPage'
-import { BurndownPage } from '@/pages/BurndownPage'
-import { ReportPage } from '@/pages/ReportPage'
-import { AdminPage } from '@/pages/AdminPage'
-import { TaskDetailPage } from '@/pages/TaskDetailPage'
+import { SignupPage } from '@/pages/SignupPage'
+import { VerifyEmailPage } from '@/pages/VerifyEmailPage'
+import { VerifyNeededPage } from '@/pages/VerifyNeededPage'
+import { BoardPage } from '@/pages/BoardPage'
+import { TeamsPage } from '@/pages/TeamsPage'
+import { EpicsPage } from '@/pages/EpicsPage'
+import { TicketPage } from '@/pages/TicketPage'
 
-function isAuthenticated() {
-  return !!localStorage.getItem('accessToken')
-}
-
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  return isAuthenticated() ? <>{children}</> : <Navigate to="/login" replace />
+// Authenticated + verified pages render inside the app shell.
+function Protected({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  if (!localStorage.getItem('accessToken')) return <Navigate to="/login" replace />
+  if (loading) return <Loading />
+  if (!user) return <Navigate to="/login" replace />
+  if (!user.emailVerified) return <Navigate to="/verify-needed" replace />
+  return <Layout>{children}</Layout>
 }
 
 export function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <DashboardPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId/tasks"
-        element={
-          <PrivateRoute>
-            <TasksPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId/tasks/:taskId"
-        element={
-          <PrivateRoute>
-            <TaskDetailPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId/sprints"
-        element={
-          <PrivateRoute>
-            <SprintsPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId/board"
-        element={
-          <PrivateRoute>
-            <KanbanPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId/sprints/:sprintId/burndown"
-        element={
-          <PrivateRoute>
-            <BurndownPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/projects/:projectId/report"
-        element={
-          <PrivateRoute>
-            <ReportPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/admin"
-        element={
-          <PrivateRoute>
-            <AdminPage />
-          </PrivateRoute>
-        }
-      />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/signup" element={<SignupPage />} />
+      <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/verify-needed" element={<VerifyNeededPage />} />
+
+      <Route path="/board" element={<Protected><BoardPage /></Protected>} />
+      <Route path="/teams" element={<Protected><TeamsPage /></Protected>} />
+      <Route path="/epics" element={<Protected><EpicsPage /></Protected>} />
+      <Route path="/tickets/new" element={<Protected><TicketPage /></Protected>} />
+      <Route path="/tickets/:id" element={<Protected><TicketPage /></Protected>} />
+
+      <Route path="*" element={<Navigate to="/board" replace />} />
     </Routes>
   )
 }

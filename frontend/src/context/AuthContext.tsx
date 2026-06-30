@@ -1,13 +1,13 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { authApi, clearTokens } from '@/services/api'
+import { authApi, setTokens, clearTokens } from '@/services/api'
 import type { User } from '@/types'
 
 interface AuthContextValue {
   user: User | null
   loading: boolean
-  isAdmin: boolean
-  refresh: () => void
+  login: (email: string, password: string) => Promise<User>
   logout: () => Promise<void>
+  refresh: () => void
 }
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
@@ -32,20 +32,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(refresh, [])
 
+  async function login(email: string, password: string) {
+    const { data } = await authApi.login(email, password)
+    setTokens(data.data.tokens)
+    setUser(data.data.user)
+    return data.data.user
+  }
+
   async function logout() {
     try {
       await authApi.logout(localStorage.getItem('refreshToken'))
     } catch {
-      // clear locally regardless
+      /* clear locally regardless */
     }
     clearTokens()
     setUser(null)
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin: user?.role === 'ADMIN', refresh, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <AuthContext.Provider value={{ user, loading, login, logout, refresh }}>{children}</AuthContext.Provider>
   )
 }
 

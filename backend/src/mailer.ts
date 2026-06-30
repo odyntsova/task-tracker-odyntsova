@@ -15,8 +15,10 @@ export interface EmailTransport {
 }
 
 const consoleTransport: EmailTransport = {
-  async send({ to, subject }) {
-    if (process.env.NODE_ENV !== 'test') console.log(`[email] → ${to} | ${subject}`)
+  async send({ to, subject, text }) {
+    // Dev convenience: print the body (which carries verification/reset tokens)
+    // so QA can complete flows without a real mailbox. Never used in test/prod SMTP.
+    if (process.env.NODE_ENV !== 'test') console.log(`[email] → ${to} | ${subject}\n        ${text}`)
   },
 }
 

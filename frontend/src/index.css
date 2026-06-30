@@ -102,3 +102,57 @@ td {
 [data-testid='kanban-board'] {
   overflow-x: auto;
 }
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 10px clamp(12px, 4vw, 32px);
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+}
+.app-header nav {
+  display: flex;
+  gap: 14px;
+}
+.app-header .user-menu {
+  margin-left: auto;
+  position: relative;
+}
+.app-header .user-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: 110%;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px;
+}
+.board-toolbar,
+.board-filters {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 12px 0;
+}
+.board-column ul {
+  list-style: none;
+  padding: 0;
+}
+.board-column li {
+  display: block;
+  border-bottom: none;
+}
+.badge {
+  display: inline-block;
+  background: #eef0f3;
+  border-radius: 10px;
+  padding: 1px 8px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+.muted {
+  color: var(--muted);
+  font-size: 0.85rem;
+}

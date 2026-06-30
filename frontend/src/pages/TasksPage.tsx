@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, FormEvent } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { tasksApi, usersApi, sprintsApi, TaskListParams } from '@/services/api'
+import { Loading, ErrorMessage } from '@/components/AsyncState'
 import type { Task, TaskStatus, TaskPriority, User, Sprint } from '@/types'
 
 const STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE', 'BLOCKED']
@@ -171,9 +172,9 @@ export function TasksPage() {
       </section>
 
       {loading ? (
-        <p data-testid="loading">Loading…</p>
+        <Loading />
       ) : error ? (
-        <p data-testid="error" role="alert">{error}</p>
+        <ErrorMessage>{error}</ErrorMessage>
       ) : tasks.length === 0 ? (
         <p data-testid="empty-state">No tasks match the current filters.</p>
       ) : (

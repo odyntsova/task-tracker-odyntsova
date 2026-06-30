@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { projectsApi, ProjectReport } from '@/services/api'
+import { Loading, ErrorMessage } from '@/components/AsyncState'
 
 const STATUSES = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE', 'BLOCKED']
 
@@ -19,8 +20,8 @@ export function ReportPage() {
       .finally(() => setLoading(false))
   }, [projectId])
 
-  if (loading) return <p data-testid="loading">Loading…</p>
-  if (error) return <p data-testid="error" role="alert">{error}</p>
+  if (loading) return <Loading />
+  if (error) return <ErrorMessage>{error}</ErrorMessage>
   if (!report) return null
 
   const { tasks, velocity } = report

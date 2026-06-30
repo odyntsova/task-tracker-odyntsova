@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { projectsApi, notificationsApi } from '@/services/api'
 import { useAuth } from '@/context/AuthContext'
+import { Loading, ErrorMessage } from '@/components/AsyncState'
 import type { Project, Notification } from '@/types'
 
 export function DashboardPage() {
@@ -51,8 +52,8 @@ export function DashboardPage() {
     navigate('/login')
   }
 
-  if (loading) return <p data-testid="loading">Loading…</p>
-  if (error) return <p data-testid="error" role="alert">{error}</p>
+  if (loading) return <Loading />
+  if (error) return <ErrorMessage>{error}</ErrorMessage>
 
   return (
     <main data-testid="dashboard-page">

@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { tasksApi, TaskActivity } from '@/services/api'
+import { Loading, ErrorMessage } from '@/components/AsyncState'
 import type { Task, Comment } from '@/types'
 
 export function TaskDetailPage() {
@@ -45,8 +46,8 @@ export function TaskDetailPage() {
     }
   }
 
-  if (loading) return <p data-testid="loading">Loading…</p>
-  if (error) return <p data-testid="error" role="alert">{error}</p>
+  if (loading) return <Loading />
+  if (error) return <ErrorMessage>{error}</ErrorMessage>
   if (!task) return null
 
   return (

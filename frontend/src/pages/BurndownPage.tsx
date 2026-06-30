@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { sprintsApi, BurndownData } from '@/services/api'
+import { Loading, ErrorMessage } from '@/components/AsyncState'
 
 const W = 480
 const H = 240
@@ -32,8 +33,8 @@ export function BurndownPage() {
       .finally(() => setLoading(false))
   }, [sprintId])
 
-  if (loading) return <p data-testid="loading">Loading…</p>
-  if (error) return <p data-testid="error" role="alert">{error}</p>
+  if (loading) return <Loading />
+  if (error) return <ErrorMessage>{error}</ErrorMessage>
   if (!data) return null
 
   const { total, points } = data

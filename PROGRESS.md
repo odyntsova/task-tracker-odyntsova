@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~87%** (49/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 209 автотестів (135 unit + 43 integration + 31 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~89%** (51/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 209 автотестів (135 unit + 43 integration + 31 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -83,7 +83,7 @@ _Останнє оновлення: 2026-06-30_
 | RBAC-5 | Адмін-панель: PATCH /users/:id/role (ADMIN-only, no self-change) + AdminPage (role-gated) | Medium | L | ✅ |
 | RBAC-6 | Тільки creator/assignee/ADMIN/PM може редагувати задачу (`canEditTask`) — 403 для решти | Medium | M | ✅ |
 
-### EPIC 4 — Frontend · готовність ~75%
+### EPIC 4 — Frontend · готовність 100%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | FE-1 | Login + Dashboard + Tasks (перегляд) | High | M | ✅ |
@@ -91,8 +91,8 @@ _Останнє оновлення: 2026-06-30_
 | FE-3 | Форма створення задачі + інлайн-зміна статусу | High | M | ✅ |
 | FE-4 | Фільтри (статус/пріоритет/assignee/пошук) + інлайн зміна статусу/пріоритету/assignee | Medium | M | ✅ |
 | FE-5 | AuthContext (user/isAdmin/logout) + useAuth; Dashboard/Admin/Sprints через контекст | Medium | M | ✅ |
-| FE-6 | Обробка помилок/лоадерів консистентно | Medium | S | ⬜ |
-| FE-7 | Адаптивна верстка + базовий дизайн | Low | L | ⬜ |
+| FE-6 | Спільні Loading/ErrorMessage компоненти (єдині testid) — адаптовано в 5 сторінках | Medium | S | ✅ |
+| FE-7 | Глобальний адаптивний stylesheet (контейнер, форми, таблиці, kanban-scroll) | Low | L | ✅ |
 | FE-8 | UI спринтів: SprintsPage (список+створення, role-gated) + дропдаун спринта на задачі | Medium | M | ✅ |
 | FE-9 | Kanban-дошка (KanbanPage) — колонки за статусом, drag&drop, нав-лінки | Medium | M | ✅ |
 | FE-10 | Авто-рефреш access-токена на 401 (single-flight) + logout-кнопка + зберігання refresh | Medium | M | ✅ |

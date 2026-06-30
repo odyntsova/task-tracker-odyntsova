@@ -51,14 +51,17 @@ _Last updated: 2026-06-30_
 ### Phase 9 — Compose / docs / e2e
 - [x] README rewritten to spec; docker-compose SMTP env wired; fresh DB no seed
 - [x] Playwright e2e rewritten (auth UI flows + core verified-user flow + filters)
-- [ ] `docker compose up --build` actually run on a Docker host (not possible in this dev env — no Docker installed)
+- [x] `docker compose up --build` run on a Docker host (verified by the user — full stack up, signup→verify→login works)
 
 ---
 
-## Stretch (allowed, present)
+## Beyond mandatory
+- **Argon2id** password hashing (spec's named algorithm) ✅
 - Password reset (forgot/reset) ✅
-- Edit/delete own comments — not done
-- Ticket activity history — removed in realignment; can re-add
+- Edit/delete own comments ✅
+- Email verification auto-redirect to login + success states (loading/empty/error/success) ✅
+- Large boards: per-column scroll keeps 100+ tickets usable ✅ (full windowing intentionally skipped — conflicts with simple HTML5 DnD, marginal value)
+- Ticket activity history — removed in realignment (out of scope per §12)
 
 ## Notes
 - CI workflow still partly templated for old layout — revisit after FE.

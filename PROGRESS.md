@@ -43,20 +43,20 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~59%** (30/52 тікети). Auth + Tasks + Sprints — повний зріз + Kanban + rate limiting + PostgreSQL + RBAC (вкл. ownership на редагування задач). 132 автотести (84 unit + 27 integration + 21 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~62%** (32/52 тікети). Auth (вкл. refresh-токени + logout-revocation), Tasks, Sprints — повні зрізи + Kanban + rate limiting + PostgreSQL + RBAC. 140 автотестів (89 unit + 30 integration + 21 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
 
 ---
 
-### EPIC 1 — Auth & Security · готовність ~80%
+### EPIC 1 — Auth & Security · готовність ~95%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | AUTH-1 | Роут логіну + юніт-тести | High | M | ✅ |
 | AUTH-2 | Роут реєстрації (lowercase email, anti-privilege-escalation) | High | M | ✅ |
-| AUTH-3 | Refresh-токени (зараз тільки access, 15 хв) | Medium | M | ⬜ |
-| AUTH-4 | Logout з реальною інвалідацією токена (зараз заглушка) | Medium | S | ⬜ |
+| AUTH-3 | Refresh-токени (DB-backed, ротація, 7 днів) + POST /auth/refresh — `tokens.ts` | Medium | M | ✅ |
+| AUTH-4 | Logout відкликає refresh-токен (revokedAt); reuse → 401 | Medium | S | ✅ |
 | AUTH-5 | Rate limiting на /login та /register (in-memory, 429) — `middleware/rateLimit.ts` | Medium | S | ✅ |
 | AUTH-6 | Скидання/зміна пароля (forgot password flow) | Low | L | ⬜ |
 | AUTH-7 | Підтвердження email | Low | M | ⬜ |
@@ -121,10 +121,10 @@ _Останнє оновлення: 2026-06-30_
 ### EPIC 8 — Testing & QA infrastructure · готовність ~30%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (84, 6 сьют): auth, tasks, projects, users, sprints, RBAC (вкл. edit-ownership), transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (89, 6 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
-| QA-4 | Integration-тести проти реальної SQLite БД (25 тестів: constraint, RBAC, пагінація, переходи, assignee, фільтри, users, sprints, sprint-assign) | High | M | ✅ |
+| QA-4 | Integration-тести проти реальної PostgreSQL БД (30 тестів: constraint, RBAC, пагінація, переходи, assignee, фільтри, users, sprints, sprint-assign, refresh-flow) | High | M | ✅ |
 | QA-5 | Playwright e2e (21 тест): auth (знайшов BUG-3) + tasks/фільтри/assignee + sprints + kanban drag&drop | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги в CI (80% backend) | Low | S | ⬜ |
@@ -157,7 +157,8 @@ _Останнє оновлення: 2026-06-30_
 14. ~~**AUTH-5** — rate limiting~~ ✅
 15. ~~**OPS-1** — перехід на PostgreSQL~~ ✅
 16. ~~**RBAC-6** — ownership на редагування задач~~ ✅
-17. Далі: **AUTH-3** refresh-токени, **AUTH-4** реальний logout, **SPRINT-4** burndown, **OPS-3** Dockerfile, епіки Notifications/Reporting 👈 наступне
+17. ~~**AUTH-3** refresh-токени + **AUTH-4** logout-revocation~~ ✅
+18. Далі: FE авто-рефреш на 401, **SPRINT-4** burndown, **OPS-3** Dockerfile, епіки Notifications/Reporting 👈 наступне
 
 ---
 

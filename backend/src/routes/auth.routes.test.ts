@@ -4,10 +4,20 @@ import bcrypt from 'bcryptjs'
 // --- Mocks ---------------------------------------------------------------
 const mockFindUnique = jest.fn()
 const mockCreate = jest.fn()
+const mockRtCreate = jest.fn()
+const mockRtFindUnique = jest.fn()
+const mockRtUpdate = jest.fn()
+const mockRtUpdateMany = jest.fn()
 
 jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => ({
     user: { findUnique: mockFindUnique, create: mockCreate },
+    refreshToken: {
+      create: mockRtCreate,
+      findUnique: mockRtFindUnique,
+      update: mockRtUpdate,
+      updateMany: mockRtUpdateMany,
+    },
   })),
 }))
 
@@ -28,6 +38,12 @@ beforeAll(async () => {
 beforeEach(() => {
   mockFindUnique.mockReset()
   mockCreate.mockReset()
+  mockRtCreate.mockReset()
+  mockRtFindUnique.mockReset()
+  mockRtUpdate.mockReset()
+  mockRtUpdateMany.mockReset()
+  // issueTokens persists a refresh token on every login/register
+  mockRtCreate.mockResolvedValue({ id: 'rt-1' })
 })
 
 const existingUser = () => ({
@@ -265,5 +281,62 @@ describe('POST /api/auth/register', () => {
 
     expect(res.status).toBe(422)
     expect(mockCreate).not.toHaveBeenCalled()
+  })
+})
+
+describe('POST /api/auth/refresh (AUTH-3)', () => {
+  const validStored = () => ({
+    id: 'rt-1',
+    revokedAt: null,
+    expiresAt: new Date(Date.now() + 60_000),
+    user: { id: 'user-1', role: 'QA' },
+  })
+
+  it('returns a fresh token pair for a valid refresh token (200) and rotates the old one', async () => {
+    mockRtFindUnique.mockResolvedValue(validStored())
+    mockRtUpdate.mockResolvedValue({})
+
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: 'valid-token' })
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.tokens.accessToken).toEqual(expect.any(String))
+    expect(res.body.data.tokens.refreshToken).toEqual(expect.any(String))
+    // old token revoked (rotation) and a new one created
+    expect(mockRtUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'rt-1' }, data: { revokedAt: expect.any(Date) } })
+    )
+    expect(mockRtCreate).toHaveBeenCalled()
+  })
+
+  it('returns 401 for an unknown refresh token', async () => {
+    mockRtFindUnique.mockResolvedValue(null)
+
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: 'nope' })
+
+    expect(res.status).toBe(401)
+    expect(mockRtUpdate).not.toHaveBeenCalled()
+  })
+
+  it('returns 401 for a revoked refresh token', async () => {
+    mockRtFindUnique.mockResolvedValue({ ...validStored(), revokedAt: new Date() })
+
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: 'revoked' })
+
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 401 for an expired refresh token', async () => {
+    mockRtFindUnique.mockResolvedValue({ ...validStored(), expiresAt: new Date(Date.now() - 1000) })
+
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken: 'expired' })
+
+    expect(res.status).toBe(401)
+  })
+
+  it('returns 422 when refreshToken is missing', async () => {
+    const res = await request(app).post('/api/auth/refresh').send({})
+
+    expect(res.status).toBe(422)
+    expect(mockRtFindUnique).not.toHaveBeenCalled()
   })
 })

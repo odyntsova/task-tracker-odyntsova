@@ -1,10 +1,10 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
 import { z } from 'zod'
 import { requireAuth, AuthRequest } from '../middleware/auth'
 import { rateLimit } from '../middleware/rateLimit'
+import { issueTokens, hashToken } from '../tokens'
 
 // Generous enough for local dev / test suites, while still capping brute-force
 // attempts. Production should tune this lower (and back it with a shared store).
@@ -51,16 +51,12 @@ authRouter.post('/register', authLimiter, async (req, res) => {
     data: { name, email, passwordHash, role: 'DEVELOPER' },
   })
 
-  const accessToken = jwt.sign(
-    { userId: user.id, role: user.role },
-    process.env.JWT_SECRET!,
-    { expiresIn: '15m' }
-  )
+  const tokens = await issueTokens(prisma, user)
 
   res.status(201).json({
     data: {
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
-      tokens: { accessToken },
+      tokens,
     },
     error: null,
   })
@@ -81,16 +77,12 @@ authRouter.post('/login', authLimiter, async (req, res) => {
     return
   }
 
-  const accessToken = jwt.sign(
-    { userId: user.id, role: user.role },
-    process.env.JWT_SECRET!,
-    { expiresIn: '15m' }
-  )
+  const tokens = await issueTokens(prisma, user)
 
   res.json({
     data: {
       user: { id: user.id, name: user.name, email: user.email, role: user.role },
-      tokens: { accessToken },
+      tokens,
     },
     error: null,
   })
@@ -110,6 +102,46 @@ authRouter.get('/me', requireAuth, async (req: AuthRequest, res) => {
   res.json({ data: user, error: null })
 })
 
-authRouter.post('/logout', requireAuth, (_req, res) => {
+const refreshSchema = z.object({ refreshToken: z.string().min(1) })
+
+// AUTH-3: exchange a valid refresh token for a new access + refresh token pair.
+// The old refresh token is rotated out (revoked) so it cannot be reused.
+authRouter.post('/refresh', authLimiter, async (req, res) => {
+  const parsed = refreshSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(422).json({ data: null, error: 'Invalid input' })
+    return
+  }
+
+  const stored = await prisma.refreshToken.findUnique({
+    where: { tokenHash: hashToken(parsed.data.refreshToken) },
+    include: { user: true },
+  })
+
+  const isValid = stored && !stored.revokedAt && stored.expiresAt > new Date()
+  if (!isValid) {
+    res.status(401).json({ data: null, error: 'Invalid or expired refresh token' })
+    return
+  }
+
+  // Rotate: revoke the presented token, then issue a fresh pair.
+  await prisma.refreshToken.update({
+    where: { id: stored.id },
+    data: { revokedAt: new Date() },
+  })
+
+  const tokens = await issueTokens(prisma, stored.user)
+  res.json({ data: { tokens }, error: null })
+})
+
+// AUTH-4: logout revokes the supplied refresh token (best-effort, idempotent).
+authRouter.post('/logout', requireAuth, async (req: AuthRequest, res) => {
+  const refreshToken = (req.body?.refreshToken as string | undefined) ?? ''
+  if (refreshToken) {
+    await prisma.refreshToken.updateMany({
+      where: { tokenHash: hashToken(refreshToken), userId: req.userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    })
+  }
   res.json({ data: null, error: null })
 })

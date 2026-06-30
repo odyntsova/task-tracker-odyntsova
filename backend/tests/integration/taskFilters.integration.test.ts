@@ -7,6 +7,7 @@ const prisma = new PrismaClient()
 
 async function cleanDb() {
   await prisma.task.deleteMany()
+  await prisma.refreshToken.deleteMany()
   await prisma.project.deleteMany()
   await prisma.user.deleteMany()
 }

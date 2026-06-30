@@ -7,8 +7,9 @@ import { app } from '../../src/app'
 const prisma = new PrismaClient()
 
 async function cleanDb() {
-  // Delete in FK-safe order: tasks → projects → users.
+  // Delete in FK-safe order: tasks → refresh tokens → projects → users.
   await prisma.task.deleteMany()
+  await prisma.refreshToken.deleteMany()
   await prisma.project.deleteMany()
   await prisma.user.deleteMany()
 }
@@ -70,6 +71,50 @@ describe('Integration: registration persists to the real DB', () => {
 
     expect(res.status).toBe(200)
     expect(res.body.data.user.email).toBe('round@example.com')
+  })
+})
+
+describe('Integration: refresh-token flow (AUTH-3/AUTH-4)', () => {
+  async function registerAndGetTokens(email: string) {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ name: 'R', email, password: 'password123' })
+    return res.body.data.tokens as { accessToken: string; refreshToken: string }
+  }
+
+  it('issues a refresh token on register and rotates it on /refresh', async () => {
+    const { refreshToken } = await registerAndGetTokens('refresh@example.com')
+    expect(refreshToken).toEqual(expect.any(String))
+
+    const res = await request(app).post('/api/auth/refresh').send({ refreshToken })
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.tokens.accessToken).toEqual(expect.any(String))
+    // rotation: a new refresh token, different from the old one
+    expect(res.body.data.tokens.refreshToken).not.toBe(refreshToken)
+    // the old token row is now revoked
+    expect(await prisma.refreshToken.count({ where: { revokedAt: null } })).toBe(1)
+  })
+
+  it('rejects reuse of a rotated (revoked) refresh token with 401', async () => {
+    const { refreshToken } = await registerAndGetTokens('reuse@example.com')
+    await request(app).post('/api/auth/refresh').send({ refreshToken }) // rotates it
+
+    const reuse = await request(app).post('/api/auth/refresh').send({ refreshToken })
+
+    expect(reuse.status).toBe(401)
+  })
+
+  it('logout revokes the refresh token so it can no longer be used', async () => {
+    const { accessToken, refreshToken } = await registerAndGetTokens('logout@example.com')
+
+    await request(app)
+      .post('/api/auth/logout')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ refreshToken })
+
+    const afterLogout = await request(app).post('/api/auth/refresh').send({ refreshToken })
+    expect(afterLogout.status).toBe(401)
   })
 })
 

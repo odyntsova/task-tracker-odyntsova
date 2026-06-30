@@ -136,27 +136,103 @@ td {
   flex-wrap: wrap;
   margin: 12px 0;
 }
+.board-toolbar {
+  justify-content: space-between; /* team selector left, + New ticket right */
+}
+.board-filters .ticket-count {
+  margin-left: auto; /* push the count to the far right */
+  color: var(--muted);
+}
+
+/* dark primary button (e.g. + New ticket) */
+.btn-primary {
+  background: #111827;
+  color: #fff;
+  border: none;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #374151;
+}
+
 .board-column {
-  min-height: 320px;
+  min-height: 340px;
   display: flex;
   flex-direction: column;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+}
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #374151;
+  margin: 0 0 10px;
+}
+.col-count {
+  background: #d1d5db;
+  color: #111827;
+  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 0.75rem;
 }
 .board-column ul {
   list-style: none;
   padding: 0;
+  margin: 0;
   flex: 1; /* fill the column so all columns are equal height */
 }
-.board-column li {
+
+/* ticket cards */
+.ticket-card {
   display: block;
-  border-bottom: none;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
+.ticket-card:hover {
+  border-color: var(--accent);
+}
+.card-title {
+  font-weight: 600;
+  margin: 6px 0 2px;
+}
+.card-time {
+  text-align: right;
+  font-size: 0.72rem;
+}
+
+/* colored type badges */
 .badge {
   display: inline-block;
-  background: #eef0f3;
   border-radius: 10px;
   padding: 1px 8px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.03em;
+  background: #eef0f3;
+  color: #374151;
+}
+.badge.type-bug {
+  background: #fde2e1;
+  color: #b42318;
+}
+.badge.type-feature {
+  background: #dcfae6;
+  color: #067647;
+}
+.badge.type-fix {
+  background: #fef0c7;
+  color: #b54708;
 }
 .muted {
   color: var(--muted);

@@ -19,6 +19,11 @@ export function BoardPage() {
   const [type, setType] = useState<TicketType | ''>('')
   const [epicId, setEpicId] = useState('')
   const [q, setQ] = useState('')
+  const clearFilters = () => {
+    setType('')
+    setEpicId('')
+    setQ('')
+  }
 
   useEffect(() => {
     teamsApi
@@ -66,6 +71,16 @@ export function BoardPage() {
     }
   }
 
+  function relativeTime(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime()
+    const m = Math.floor(diff / 60000)
+    if (m < 1) return 'just now'
+    if (m < 60) return `${m}m ago`
+    const h = Math.floor(m / 60)
+    if (h < 24) return `${h}h ago`
+    return `${Math.floor(h / 24)}d ago`
+  }
+
   if (loading) return <Loading />
   if (error) return <ErrorMessage>{error}</ErrorMessage>
 
@@ -89,7 +104,7 @@ export function BoardPage() {
             ))}
           </select>
         </label>
-        <button data-testid="new-ticket-button" onClick={() => navigate(`/tickets/new?teamId=${teamId}`)}>
+        <button className="btn-primary" data-testid="new-ticket-button" onClick={() => navigate(`/tickets/new?teamId=${teamId}`)}>
           + New ticket
         </button>
       </div>
@@ -105,7 +120,8 @@ export function BoardPage() {
           <option value="">All epics</option>
           {epics.map((ep) => <option key={ep.id} value={ep.id}>{ep.title}</option>)}
         </select>
-        <span data-testid="ticket-count">{tickets.length} tickets</span>
+        <button data-testid="filter-clear" onClick={clearFilters}>Clear</button>
+        <span className="ticket-count" data-testid="ticket-count">{tickets.length} tickets</span>
       </div>
 
       {moveError && <ErrorMessage>{moveError}</ErrorMessage>}
@@ -115,20 +131,20 @@ export function BoardPage() {
           const inColumn = tickets.filter((t) => t.state === state)
           return (
             <section key={state} data-testid={`column-${state}`} className="board-column"
-              onDragOver={(e) => e.preventDefault()} onDrop={(e) => onDrop(e, state)}
-              style={{ flex: 1, minWidth: 180, border: '1px solid #ccc', padding: 8 }}>
-              <h2 style={{ fontSize: '0.85rem' }}>
-                {STATE_LABEL[state]} <span data-testid={`count-${state}`}>({inColumn.length})</span>
+              onDragOver={(e) => e.preventDefault()} onDrop={(e) => onDrop(e, state)}>
+              <h2 className="column-header">
+                {STATE_LABEL[state]}
+                <span className="col-count" data-testid={`count-${state}`}>{inColumn.length}</span>
               </h2>
-              <ul style={{ minHeight: 40 }}>
+              <ul>
                 {inColumn.map((t) => (
-                  <li key={t.id} data-testid={`card-${t.id}`} draggable
+                  <li key={t.id} className="ticket-card" data-testid={`card-${t.id}`} draggable
                     onDragStart={(e) => { e.dataTransfer.setData('text/plain', t.id); e.dataTransfer.effectAllowed = 'move' }}
-                    onClick={() => navigate(`/tickets/${t.id}`)}
-                    style={{ border: '1px solid #999', borderRadius: 4, padding: 6, marginBottom: 6, cursor: 'pointer', display: 'block' }}>
-                    <small className="badge">{t.type}</small>
-                    <div data-testid="card-title"><strong>{t.title}</strong></div>
-                    {t.epic && <small>Epic: {t.epic.title}</small>}
+                    onClick={() => navigate(`/tickets/${t.id}`)}>
+                    <span className={`badge type-${t.type}`}>{t.type}</span>
+                    <div data-testid="card-title" className="card-title">{t.title}</div>
+                    {t.epic && <small className="muted">Epic: {t.epic.title}</small>}
+                    <div className="card-time muted">{relativeTime(t.modifiedAt)}</div>
                   </li>
                 ))}
               </ul>

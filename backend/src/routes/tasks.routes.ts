@@ -99,6 +99,24 @@ tasksRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     include: { assignee: { select: { id: true, name: true, email: true, role: true } } },
   })
 
+  // TASK-7: record an audit entry per changed field.
+  const activity: { field: string; oldValue: string | null; newValue: string | null }[] = []
+  if (parsed.data.title !== undefined && parsed.data.title !== task.title)
+    activity.push({ field: 'title', oldValue: task.title, newValue: updated.title })
+  if (parsed.data.status && parsed.data.status !== task.status)
+    activity.push({ field: 'status', oldValue: task.status, newValue: updated.status })
+  if (parsed.data.priority && parsed.data.priority !== task.priority)
+    activity.push({ field: 'priority', oldValue: task.priority, newValue: updated.priority })
+  if (parsed.data.assigneeId !== undefined && parsed.data.assigneeId !== task.assigneeId)
+    activity.push({ field: 'assignee', oldValue: task.assigneeId, newValue: updated.assigneeId })
+  if (parsed.data.sprintId !== undefined && parsed.data.sprintId !== task.sprintId)
+    activity.push({ field: 'sprint', oldValue: task.sprintId, newValue: updated.sprintId })
+  if (activity.length > 0) {
+    await prisma.taskActivity.createMany({
+      data: activity.map((a) => ({ ...a, taskId: updated.id, userId: req.userId! })),
+    })
+  }
+
   // NOTIF-1/NOTIF-2: notify the affected user (never the actor about their own action).
   const actorId = req.userId
   const assignmentChanged =
@@ -176,4 +194,20 @@ tasksRouter.post('/:id/comments', requireAuth, async (req: AuthRequest, res) => 
     include: { author: { select: { id: true, name: true, role: true } } },
   })
   res.status(201).json({ data: comment, error: null })
+})
+
+// TASK-7: task change history.
+tasksRouter.get('/:id/activity', requireAuth, async (req, res) => {
+  const task = await prisma.task.findUnique({ where: { id: req.params.id } })
+  if (!task) {
+    res.status(404).json({ data: null, error: 'Task not found' })
+    return
+  }
+
+  const activity = await prisma.taskActivity.findMany({
+    where: { taskId: req.params.id },
+    include: { user: { select: { id: true, name: true } } },
+    orderBy: { createdAt: 'desc' },
+  })
+  res.json({ data: activity, error: null })
 })

@@ -12,6 +12,7 @@ const prisma = new PrismaClient()
 
 async function cleanDb() {
   await prisma.comment.deleteMany()
+  await prisma.taskActivity.deleteMany()
   await prisma.task.deleteMany()
   await prisma.refreshToken.deleteMany()
   await prisma.passwordResetToken.deleteMany()

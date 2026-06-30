@@ -10,6 +10,8 @@ const mockSprintFindUnique = jest.fn()
 const mockNotificationCreate = jest.fn()
 const mockCommentFindMany = jest.fn()
 const mockCommentCreate = jest.fn()
+const mockActivityCreateMany = jest.fn()
+const mockActivityFindMany = jest.fn()
 
 jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => ({
@@ -27,6 +29,7 @@ jest.mock('@prisma/client', () => ({
     user: { findUnique: mockUserFindUnique, create: jest.fn() },
     notification: { create: mockNotificationCreate },
     comment: { findMany: mockCommentFindMany, create: mockCommentCreate },
+    taskActivity: { createMany: mockActivityCreateMany, findMany: mockActivityFindMany },
     $transaction: jest.fn(),
   })),
 }))
@@ -67,6 +70,8 @@ beforeEach(() => {
   mockNotificationCreate.mockResolvedValue({ id: 'notif-1' })
   mockCommentFindMany.mockReset()
   mockCommentCreate.mockReset()
+  mockActivityCreateMany.mockReset()
+  mockActivityFindMany.mockReset()
 })
 
 // --- Auth guard ----------------------------------------------------------
@@ -482,5 +487,50 @@ describe('Task comments (TASK-6)', () => {
   it('requires authentication', async () => {
     const res = await request(app).get('/api/tasks/task-1/comments')
     expect(res.status).toBe(401)
+  })
+})
+
+describe('Task activity / audit log (TASK-7)', () => {
+  it('records an activity entry when the status changes', async () => {
+    mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), status: 'TODO' })
+    mockTaskUpdate.mockResolvedValue({ ...sampleTask(), status: 'IN_PROGRESS' })
+
+    await auth(request(app).patch('/api/tasks/task-1')).send({ status: 'IN_PROGRESS' })
+
+    expect(mockActivityCreateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.arrayContaining([
+          expect.objectContaining({ field: 'status', oldValue: 'TODO', newValue: 'IN_PROGRESS' }),
+        ]),
+      })
+    )
+  })
+
+  it('does not record activity when nothing changes (no-op patch)', async () => {
+    mockTaskFindUnique.mockResolvedValue(sampleTask())
+    mockTaskUpdate.mockResolvedValue(sampleTask())
+
+    await auth(request(app).patch('/api/tasks/task-1')).send({})
+
+    expect(mockActivityCreateMany).not.toHaveBeenCalled()
+  })
+
+  it('lists activity for a task', async () => {
+    mockTaskFindUnique.mockResolvedValue(sampleTask())
+    mockActivityFindMany.mockResolvedValue([
+      { id: 'a1', field: 'status', oldValue: 'TODO', newValue: 'DONE', user: { id: 'u', name: 'K' } },
+    ])
+
+    const res = await auth(request(app).get('/api/tasks/task-1/activity'))
+
+    expect(res.status).toBe(200)
+    expect(res.body.data).toHaveLength(1)
+    expect(res.body.data[0].field).toBe('status')
+  })
+
+  it('returns 404 listing activity for a missing task', async () => {
+    mockTaskFindUnique.mockResolvedValue(null)
+    const res = await auth(request(app).get('/api/tasks/ghost/activity'))
+    expect(res.status).toBe(404)
   })
 })

@@ -8,6 +8,7 @@ const prisma = new PrismaClient()
 
 async function cleanDb() {
   await prisma.comment.deleteMany()
+  await prisma.taskActivity.deleteMany()
   // Delete in FK-safe order: tasks → refresh tokens → projects → users.
   await prisma.task.deleteMany()
   await prisma.refreshToken.deleteMany()

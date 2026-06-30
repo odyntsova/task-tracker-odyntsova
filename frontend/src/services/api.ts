@@ -128,6 +128,17 @@ export const tasksApi = {
   comments: (id: string) => http.get<ApiResponse<Comment[]>>(`/tasks/${id}/comments`),
   addComment: (id: string, body: string) =>
     http.post<ApiResponse<Comment>>(`/tasks/${id}/comments`, { body }),
+
+  activity: (id: string) => http.get<ApiResponse<TaskActivity[]>>(`/tasks/${id}/activity`),
+}
+
+export interface TaskActivity {
+  id: string
+  field: string
+  oldValue: string | null
+  newValue: string | null
+  createdAt: string
+  user: { id: string; name: string }
 }
 
 export const usersApi = {

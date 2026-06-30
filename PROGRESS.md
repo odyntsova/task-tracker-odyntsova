@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~83%** (47/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 192 автотести (131 unit + 42 integration + 30 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~85%** (48/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 209 автотестів (135 unit + 43 integration + 31 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -61,7 +61,7 @@ _Останнє оновлення: 2026-06-30_
 | AUTH-6 | Скидання пароля: forgot/reset (PasswordResetToken, email-токен, revoke сесій, одноразовий) | Low | L | ✅ |
 | AUTH-7 | Підтвердження email: EmailVerificationToken, токен при register, POST /verify-email | Low | M | ✅ |
 
-### EPIC 2 — Tasks & Projects API · готовність ~90%
+### EPIC 2 — Tasks & Projects API · готовність 100%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | TASK-1 | CRUD-роути tasks та projects | High | M | ✅ |
@@ -70,7 +70,7 @@ _Останнє оновлення: 2026-06-30_
 | TASK-4 | Призначення задач + перевірка існування юзера (422 якщо нема) | Medium | S | ✅ |
 | TASK-5 | Фільтри (status/priority/assignee/unassigned) + пошук + сортування + фікс meta.total | Medium | M | ✅ |
 | TASK-6 | Коментарі до задач: GET/POST /tasks/:id/comments + TaskDetailPage | Low | M | ✅ |
-| TASK-7 | Історія змін задачі (audit log) | Low | L | ⬜ |
+| TASK-7 | Історія змін задачі (TaskActivity): запис у PATCH + GET /tasks/:id/activity + UI | Low | L | ✅ |
 | TASK-8 | `GET /api/users` (для дропдаунів assignee, без passwordHash) | Medium | S | ✅ |
 
 ### EPIC 3 — RBAC (ролі та права) · готовність 100%
@@ -124,11 +124,11 @@ _Останнє оновлення: 2026-06-30_
 ### EPIC 8 — Testing & QA infrastructure · готовність ~95%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (131, 8 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (135, 8 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
-| QA-4 | Integration-тести проти реальної PostgreSQL БД (42 тести: + email verify) | High | M | ✅ |
-| QA-5 | Playwright e2e (30 тестів): + comments | Medium | L | ✅ |
+| QA-4 | Integration-тести проти реальної PostgreSQL БД (43 тести: + activity) | High | M | ✅ |
+| QA-5 | Playwright e2e (31 тест): + activity | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги 80% у jest.config + enforced у CI (backend-scoped job); поточно ~97% | Low | S | ✅ |
 

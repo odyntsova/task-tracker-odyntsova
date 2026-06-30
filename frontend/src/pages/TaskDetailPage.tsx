@@ -1,12 +1,13 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { tasksApi } from '@/services/api'
+import { tasksApi, TaskActivity } from '@/services/api'
 import type { Task, Comment } from '@/types'
 
 export function TaskDetailPage() {
   const { projectId, taskId } = useParams<{ projectId: string; taskId: string }>()
   const [task, setTask] = useState<Task | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
+  const [activity, setActivity] = useState<TaskActivity[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -26,6 +27,7 @@ export function TaskDetailPage() {
       .catch(() => setError('Failed to load task'))
       .finally(() => setLoading(false))
     loadComments()
+    tasksApi.activity(taskId).then(({ data }) => setActivity(data.data)).catch(() => {})
   }, [taskId])
 
   async function handleAdd(e: FormEvent) {
@@ -85,6 +87,22 @@ export function TaskDetailPage() {
             {posting ? 'Posting…' : 'Comment'}
           </button>
         </form>
+      </section>
+
+      <section aria-label="Activity">
+        <h2>Activity</h2>
+        {activity.length === 0 ? (
+          <p data-testid="activity-empty">No changes yet.</p>
+        ) : (
+          <ul data-testid="activity-list">
+            {activity.map((a) => (
+              <li key={a.id} data-testid={`activity-${a.id}`}>
+                <strong>{a.user.name}</strong> changed <em>{a.field}</em>{' '}
+                {a.oldValue ?? '∅'} → {a.newValue ?? '∅'}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </main>
   )

@@ -7,6 +7,7 @@ const prisma = new PrismaClient()
 
 async function cleanDb() {
   await prisma.comment.deleteMany()
+  await prisma.taskActivity.deleteMany()
   await prisma.task.deleteMany()
   await prisma.refreshToken.deleteMany()
   await prisma.passwordResetToken.deleteMany()
@@ -170,5 +171,24 @@ describe('Integration: task comments (TASK-6)', () => {
     expect(list.status).toBe(200)
     expect(list.body.data).toHaveLength(1)
     expect(list.body.data[0].body).toBe('First!')
+  })
+})
+
+describe('Integration: task activity log (TASK-7)', () => {
+  it('records and lists status + priority changes with the actor', async () => {
+    const dev = await createUser('DEVELOPER', 'dev@example.com')
+    const token = await loginToken('dev@example.com')
+    const project = await prisma.project.create({ data: { name: 'P' } })
+    const task = await prisma.task.create({
+      data: { title: 'T', status: 'TODO', priority: 'LOW', projectId: project.id, creatorId: dev.id },
+    })
+
+    await request(app).patch(`/api/tasks/${task.id}`).set('Authorization', `Bearer ${token}`).send({ status: 'IN_PROGRESS', priority: 'HIGH' })
+
+    const res = await request(app).get(`/api/tasks/${task.id}/activity`).set('Authorization', `Bearer ${token}`)
+    expect(res.status).toBe(200)
+    const fields = res.body.data.map((a: { field: string }) => a.field).sort()
+    expect(fields).toEqual(['priority', 'status'])
+    expect(res.body.data[0].user.id).toBe(dev.id)
   })
 })

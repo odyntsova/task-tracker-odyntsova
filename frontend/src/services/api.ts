@@ -77,6 +77,8 @@ export const authApi = {
   logout: (refreshToken: string | null) => http.post('/auth/logout', { refreshToken }),
   verifyEmail: (token: string) => http.post('/auth/verify-email', { token }),
   resendVerification: (email: string) => http.post('/auth/resend-verification', { email }),
+  forgotPassword: (email: string) => http.post('/auth/forgot-password', { email }),
+  resetPassword: (token: string, password: string) => http.post('/auth/reset-password', { token, password }),
 }
 
 export const teamsApi = {

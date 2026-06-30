@@ -38,6 +38,7 @@ export function LoginPage() {
         </button>
       </form>
       <p>No account? <Link to="/signup">Sign up</Link></p>
+      <p>Forgot your password? <Link to="/forgot-password">Reset it</Link></p>
       <p>Need a new verification email? <Link to="/verify-needed">Resend</Link></p>
     </main>
   )

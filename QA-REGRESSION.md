@@ -13,8 +13,8 @@
 |-------|------|-------|--------|
 | `backend` Jest unit | mocked unit | 6 | ✅ all pass |
 | `backend` Jest integration | real PostgreSQL | 23 | ✅ all pass |
-| `e2e` Playwright (Chromium, real browser) | end-to-end | 13 | ✅ all pass |
-| **Total** | | **42** | ✅ green |
+| `e2e` Playwright (Chromium, real browser) | end-to-end | 16 | ✅ all pass |
+| **Total** | | **45** | ✅ green |
 
 **Notes from this run:**
 - Added integration test: a legacy/bcrypt (non-argon2) hash now yields **401**, not a process crash (regression guard for the bug below).
@@ -62,7 +62,7 @@ Legend: **[A]** covered by an automated test · **[M]** manual-only check.
 - [x] **[A]** Unverified user blocked from business endpoints (403) and from /board (redirect to verify)
 - [x] **[A]** Verify with invalid/used token → error; resend invalidates the previous token
 - [x] **[A]** Verify with valid token → business endpoints unlock
-- [x] **[A]** Password reset *backend*: forgot → reset → login with new password; old password rejected; token single-use (integration). **⚠ No frontend UI** — API only.
+- [x] **[A]** Password reset (full): forgot → reset → login with new password; old password rejected; token single-use. Backend (integration) + UI pages (e2e).
 - [ ] **[M]** Refresh-token rotation: expired access token transparently refreshes; logout invalidates refresh token
 
 ### Teams (CRUD)
@@ -177,11 +177,10 @@ Expected result: Edited text replaces the old; delete removes the comment. Edit/
 
 Closed in this round:
 - ✅ Comment edit/delete via UI — new Playwright spec (`comments.spec.ts`) handles `prompt`/`confirm` and asserts controls are hidden on others' comments.
-- ✅ Password reset — new backend integration tests (forgot → reset → login; old password rejected; token single-use).
+- ✅ Password reset — now end-to-end: forgot/reset **UI pages** (`password-reset.spec.ts`) plus backend integration tests (forgot → reset → login; old password rejected; token single-use). The earlier "API-only, no UI" finding is resolved.
 - ✅ Drag-failure revert — new e2e forces a 500 on the PATCH and asserts the card rolls back with a "Reverted" error.
 
 Remaining (enhancements, not regressions):
-1. **⚠ Password reset has no frontend UI** — the `forgot-password`/`reset-password` endpoints exist and are tested, but there is no page to drive them. Either build the UI or drop the endpoints to avoid dead surface.
-2. **Filter by epic + title search via UI** — covered at the API/integration level; no dedicated e2e.
+1. **Filter by epic + title search via UI** — covered at the API/integration level; no dedicated e2e.
 
-**Verdict:** Build passes full regression — **42 automated tests green** (6 unit + 23 integration + 13 e2e), the critical login-crash bug is fixed and guarded by a test, and the previously-noted coverage gaps are closed. No open blockers; the one notable finding is the API-only password-reset feature with no UI.
+**Verdict:** Build passes full regression — **45 automated tests green** (6 unit + 23 integration + 16 e2e), the critical login-crash bug is fixed and guarded by a test, and the previously-noted coverage gaps are closed. No open blockers.

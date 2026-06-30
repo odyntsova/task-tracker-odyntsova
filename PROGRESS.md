@@ -57,7 +57,7 @@ _Last updated: 2026-06-30_
 
 ## Beyond mandatory
 - **Argon2id** password hashing (spec's named algorithm) ✅
-- Password reset (forgot/reset) ✅
+- Password reset (forgot/reset) — backend + **UI pages** (e2e covered) ✅
 - Edit/delete own comments ✅
 - Email verification auto-redirect to login + success states (loading/empty/error/success) ✅
 - Large boards: per-column scroll keeps 100+ tickets usable ✅ (full windowing intentionally skipped — conflicts with simple HTML5 DnD, marginal value)

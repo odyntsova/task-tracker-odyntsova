@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~79%** (45/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 187 автотестів (119 unit + 39 integration + 30 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~81%** (46/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 189 автотестів (127 unit + 41 integration + 30 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -58,7 +58,7 @@ _Останнє оновлення: 2026-06-30_
 | AUTH-3 | Refresh-токени (DB-backed, ротація, 7 днів) + POST /auth/refresh — `tokens.ts` | Medium | M | ✅ |
 | AUTH-4 | Logout відкликає refresh-токен (revokedAt); reuse → 401 | Medium | S | ✅ |
 | AUTH-5 | Rate limiting на /login та /register (in-memory, 429) — `middleware/rateLimit.ts` | Medium | S | ✅ |
-| AUTH-6 | Скидання/зміна пароля (forgot password flow) | Low | L | ⬜ |
+| AUTH-6 | Скидання пароля: forgot/reset (PasswordResetToken, email-токен, revoke сесій, одноразовий) | Low | L | ✅ |
 | AUTH-7 | Підтвердження email | Low | M | ⬜ |
 
 ### EPIC 2 — Tasks & Projects API · готовність ~90%
@@ -124,10 +124,10 @@ _Останнє оновлення: 2026-06-30_
 ### EPIC 8 — Testing & QA infrastructure · готовність ~95%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (119, 8 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (127, 8 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
-| QA-4 | Integration-тести проти реальної PostgreSQL БД (39 тестів: + email) | High | M | ✅ |
+| QA-4 | Integration-тести проти реальної PostgreSQL БД (41 тест: + password reset) | High | M | ✅ |
 | QA-5 | Playwright e2e (30 тестів): + comments | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги 80% у jest.config + enforced у CI (backend-scoped job); поточно ~97% | Low | S | ✅ |

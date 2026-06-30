@@ -11,6 +11,7 @@ async function cleanDb() {
   // Delete in FK-safe order: tasks → refresh tokens → projects → users.
   await prisma.task.deleteMany()
   await prisma.refreshToken.deleteMany()
+  await prisma.passwordResetToken.deleteMany()
   await prisma.notification.deleteMany()
   await prisma.project.deleteMany()
   await prisma.user.deleteMany()
@@ -243,5 +244,51 @@ describe('Integration: role management (RBAC-5)', () => {
     expect(res.status).toBe(403)
     const stored = await prisma.user.findUnique({ where: { id: dev.id } })
     expect(stored!.role).toBe('DEVELOPER')
+  })
+})
+
+describe('Integration: password reset (AUTH-6)', () => {
+  const sent: import('../../src/mailer').EmailMessage[] = []
+  beforeAll(() => {
+    const { setEmailTransport } = require('../../src/mailer')
+    setEmailTransport({ async send(m: import('../../src/mailer').EmailMessage) { sent.push(m) } })
+  })
+
+  it('full flow: forgot → email token → reset → old password fails, new works, sessions revoked', async () => {
+    await createUser('DEVELOPER', 'reset-me@example.com')
+    // a live session that should be revoked by the reset
+    const oldLogin = await request(app).post('/api/auth/login').send({ email: 'reset-me@example.com', password: 'password123' })
+    const oldRefresh = oldLogin.body.data.tokens.refreshToken
+
+    sent.length = 0
+    const forgot = await request(app).post('/api/auth/forgot-password').send({ email: 'reset-me@example.com' })
+    expect(forgot.status).toBe(200)
+    // extract the raw token from the captured email
+    const token = sent[sent.length - 1].text.split(': ')[1]
+    expect(token).toBeTruthy()
+
+    const reset = await request(app).post('/api/auth/reset-password').send({ token, password: 'brandnewpass1' })
+    expect(reset.status).toBe(200)
+
+    // old password no longer works
+    const oldPw = await request(app).post('/api/auth/login').send({ email: 'reset-me@example.com', password: 'password123' })
+    expect(oldPw.status).toBe(401)
+    // new password works
+    const newPw = await request(app).post('/api/auth/login').send({ email: 'reset-me@example.com', password: 'brandnewpass1' })
+    expect(newPw.status).toBe(200)
+    // the pre-reset refresh token was revoked
+    const reuse = await request(app).post('/api/auth/refresh').send({ refreshToken: oldRefresh })
+    expect(reuse.status).toBe(401)
+  })
+
+  it('a used reset token cannot be reused (400)', async () => {
+    await createUser('DEVELOPER', 'once@example.com')
+    sent.length = 0
+    await request(app).post('/api/auth/forgot-password').send({ email: 'once@example.com' })
+    const token = sent[sent.length - 1].text.split(': ')[1]
+
+    await request(app).post('/api/auth/reset-password').send({ token, password: 'firstpass12' })
+    const second = await request(app).post('/api/auth/reset-password').send({ token, password: 'secondpass12' })
+    expect(second.status).toBe(400)
   })
 })

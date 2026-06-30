@@ -8,16 +8,27 @@ const mockRtCreate = jest.fn()
 const mockRtFindUnique = jest.fn()
 const mockRtUpdate = jest.fn()
 const mockRtUpdateMany = jest.fn()
+const mockUserUpdate = jest.fn()
+const mockPrtCreate = jest.fn()
+const mockPrtFindUnique = jest.fn()
+const mockPrtUpdate = jest.fn()
+const mockTransaction = jest.fn()
 
 jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => ({
-    user: { findUnique: mockFindUnique, create: mockCreate },
+    user: { findUnique: mockFindUnique, create: mockCreate, update: mockUserUpdate },
     refreshToken: {
       create: mockRtCreate,
       findUnique: mockRtFindUnique,
       update: mockRtUpdate,
       updateMany: mockRtUpdateMany,
     },
+    passwordResetToken: {
+      create: mockPrtCreate,
+      findUnique: mockPrtFindUnique,
+      update: mockPrtUpdate,
+    },
+    $transaction: mockTransaction,
   })),
 }))
 
@@ -42,6 +53,12 @@ beforeEach(() => {
   mockRtFindUnique.mockReset()
   mockRtUpdate.mockReset()
   mockRtUpdateMany.mockReset()
+  mockUserUpdate.mockReset()
+  mockPrtCreate.mockReset()
+  mockPrtFindUnique.mockReset()
+  mockPrtUpdate.mockReset()
+  mockTransaction.mockReset()
+  mockTransaction.mockResolvedValue([])
   // issueTokens persists a refresh token on every login/register
   mockRtCreate.mockResolvedValue({ id: 'rt-1' })
 })
@@ -338,5 +355,77 @@ describe('POST /api/auth/refresh (AUTH-3)', () => {
 
     expect(res.status).toBe(422)
     expect(mockRtFindUnique).not.toHaveBeenCalled()
+  })
+})
+
+describe('POST /api/auth/forgot-password (AUTH-6)', () => {
+  it('returns 200 and creates a reset token for a known email', async () => {
+    mockFindUnique.mockResolvedValue(existingUser())
+    mockPrtCreate.mockResolvedValue({ id: 'prt-1' })
+
+    const res = await request(app).post('/api/auth/forgot-password').send({ email: 'qa@example.com' })
+
+    expect(res.status).toBe(200)
+    expect(mockPrtCreate).toHaveBeenCalled()
+  })
+
+  it('returns 200 but does NOT reveal that an email is unknown', async () => {
+    mockFindUnique.mockResolvedValue(null)
+
+    const res = await request(app).post('/api/auth/forgot-password').send({ email: 'ghost@example.com' })
+
+    expect(res.status).toBe(200)
+    expect(mockPrtCreate).not.toHaveBeenCalled()
+  })
+
+  it('returns 422 on a malformed email', async () => {
+    const res = await request(app).post('/api/auth/forgot-password').send({ email: 'nope' })
+    expect(res.status).toBe(422)
+  })
+})
+
+describe('POST /api/auth/reset-password (AUTH-6)', () => {
+  const validRecord = () => ({
+    id: 'prt-1',
+    userId: 'user-1',
+    usedAt: null,
+    expiresAt: new Date(Date.now() + 60_000),
+  })
+
+  it('resets the password with a valid token (200) and revokes sessions', async () => {
+    mockPrtFindUnique.mockResolvedValue(validRecord())
+
+    const res = await request(app)
+      .post('/api/auth/reset-password')
+      .send({ token: 'valid', password: 'newpassword1' })
+
+    expect(res.status).toBe(200)
+    // user.update + token.update + refreshToken.updateMany run in a transaction
+    expect(mockTransaction).toHaveBeenCalled()
+  })
+
+  it('returns 400 for an unknown token', async () => {
+    mockPrtFindUnique.mockResolvedValue(null)
+    const res = await request(app).post('/api/auth/reset-password').send({ token: 'x', password: 'newpassword1' })
+    expect(res.status).toBe(400)
+    expect(mockTransaction).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 for an already-used token', async () => {
+    mockPrtFindUnique.mockResolvedValue({ ...validRecord(), usedAt: new Date() })
+    const res = await request(app).post('/api/auth/reset-password').send({ token: 'x', password: 'newpassword1' })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 400 for an expired token', async () => {
+    mockPrtFindUnique.mockResolvedValue({ ...validRecord(), expiresAt: new Date(Date.now() - 1000) })
+    const res = await request(app).post('/api/auth/reset-password').send({ token: 'x', password: 'newpassword1' })
+    expect(res.status).toBe(400)
+  })
+
+  it('returns 422 for a weak new password', async () => {
+    const res = await request(app).post('/api/auth/reset-password').send({ token: 'x', password: 'short' })
+    expect(res.status).toBe(422)
+    expect(mockPrtFindUnique).not.toHaveBeenCalled()
   })
 })

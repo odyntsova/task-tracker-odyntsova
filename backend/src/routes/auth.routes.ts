@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 import { requireAuth, AuthRequest } from '../middleware/auth'
 import { rateLimit } from '../middleware/rateLimit'
-import { issueTokens, hashToken } from '../tokens'
+import { issueTokens, hashToken, generateRefreshTokenValue } from '../tokens'
+import { sendEmail } from '../mailer'
 
 // Generous enough for local dev / test suites, while still capping brute-force
 // attempts. Production should tune this lower (and back it with a shared store).
@@ -143,5 +144,69 @@ authRouter.post('/logout', requireAuth, async (req: AuthRequest, res) => {
       data: { revokedAt: new Date() },
     })
   }
+  res.json({ data: null, error: null })
+})
+
+// --- Password reset (AUTH-6) ----------------------------------------------
+
+const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000 // 1 hour
+const forgotSchema = z.object({ email: z.string().email().toLowerCase() })
+const resetSchema = z.object({ token: z.string().min(1), password: z.string().min(8).max(72) })
+
+// Always responds 200 — never reveals whether an email is registered.
+authRouter.post('/forgot-password', authLimiter, async (req, res) => {
+  const parsed = forgotSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(422).json({ data: null, error: 'Invalid input' })
+    return
+  }
+
+  const user = await prisma.user.findUnique({ where: { email: parsed.data.email } })
+  if (user) {
+    const token = generateRefreshTokenValue()
+    await prisma.passwordResetToken.create({
+      data: {
+        tokenHash: hashToken(token),
+        userId: user.id,
+        expiresAt: new Date(Date.now() + PASSWORD_RESET_TTL_MS),
+      },
+    })
+    await sendEmail({
+      to: user.email,
+      subject: 'Password reset',
+      text: `Use this token to reset your password: ${token}`,
+    })
+  }
+
+  res.json({ data: null, error: null })
+})
+
+authRouter.post('/reset-password', authLimiter, async (req, res) => {
+  const parsed = resetSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(422).json({ data: null, error: 'Invalid input' })
+    return
+  }
+
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash: hashToken(parsed.data.token) },
+  })
+  const isValid = record && !record.usedAt && record.expiresAt > new Date()
+  if (!isValid) {
+    res.status(400).json({ data: null, error: 'Invalid or expired reset token' })
+    return
+  }
+
+  const passwordHash = await bcrypt.hash(parsed.data.password, 10)
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: record.userId }, data: { passwordHash } }),
+    prisma.passwordResetToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
+    // security: invalidate all existing sessions after a password reset
+    prisma.refreshToken.updateMany({
+      where: { userId: record.userId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    }),
+  ])
+
   res.json({ data: null, error: null })
 })

@@ -124,6 +124,40 @@ describe('Integration: sprints on real data', () => {
     expect(stored!.sprintId).toBeNull() // unchanged
   })
 
+  it('burndown reflects a task completed via the API (SPRINT-4)', async () => {
+    const pm = await createUser('PM', 'pm@example.com')
+    const token = await loginToken('pm@example.com')
+    const project = await prisma.project.create({ data: { name: 'P' } })
+    const sprint = await prisma.sprint.create({
+      data: { name: 'S', startDate: new Date('2026-07-01'), endDate: new Date('2026-07-03'), projectId: project.id },
+    })
+    // two tasks in the sprint; one will be completed
+    const t1 = await prisma.task.create({
+      data: { title: 'A', status: 'IN_REVIEW', projectId: project.id, creatorId: pm.id, sprintId: sprint.id },
+    })
+    await prisma.task.create({
+      data: { title: 'B', status: 'TODO', projectId: project.id, creatorId: pm.id, sprintId: sprint.id },
+    })
+
+    // complete t1 via the API (IN_REVIEW → DONE) — this stamps completedAt
+    const done = await request(app)
+      .patch(`/api/tasks/${t1.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'DONE' })
+    expect(done.status).toBe(200)
+    expect(await prisma.task.findUnique({ where: { id: t1.id } }).then((t) => t!.completedAt)).not.toBeNull()
+
+    const res = await request(app)
+      .get(`/api/sprints/${sprint.id}/burndown`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.total).toBe(2)
+    // last day remaining should be 1 (one task still open)
+    const last = res.body.data.points[res.body.data.points.length - 1]
+    expect(last.remaining).toBe(1)
+  })
+
   it('GET /api/sprints/:id returns the sprint with its tasks', async () => {
     const pm = await createUser('PM', 'pm@example.com')
     const token = await loginToken('pm@example.com')

@@ -79,6 +79,7 @@ model Task {
   project     Project      @relation(fields: [projectId], references: [id])
   sprintId    String?
   sprint      Sprint?      @relation(fields: [sprintId], references: [id])
+  completedAt DateTime?    // set when status becomes DONE, cleared when it leaves DONE
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 }

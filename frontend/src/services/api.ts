@@ -147,4 +147,17 @@ export const sprintsApi = {
 
   create: (projectId: string, data: { name: string; startDate: string; endDate: string }) =>
     http.post<ApiResponse<Sprint>>(`/projects/${projectId}/sprints`, data),
+
+  burndown: (sprintId: string) =>
+    http.get<ApiResponse<BurndownData>>(`/sprints/${sprintId}/burndown`),
+}
+
+export interface BurndownPoint {
+  date: string
+  ideal: number
+  remaining: number
+}
+export interface BurndownData {
+  total: number
+  points: BurndownPoint[]
 }

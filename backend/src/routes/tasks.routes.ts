@@ -84,9 +84,17 @@ tasksRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     }
   }
 
+  // SPRINT-4: stamp completedAt when a task enters DONE, clear it when it leaves.
+  const updateData: typeof parsed.data & { completedAt?: Date | null } = { ...parsed.data }
+  if (parsed.data.status === 'DONE' && task.status !== 'DONE') {
+    updateData.completedAt = new Date()
+  } else if (parsed.data.status && parsed.data.status !== 'DONE' && task.status === 'DONE') {
+    updateData.completedAt = null
+  }
+
   const updated = await prisma.task.update({
     where: { id: req.params.id },
-    data: parsed.data,
+    data: updateData,
     include: { assignee: { select: { id: true, name: true, email: true, role: true } } },
   })
 

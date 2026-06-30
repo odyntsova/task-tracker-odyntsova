@@ -110,7 +110,10 @@ export function SprintsPage() {
               <span data-testid="sprint-name-label">{s.name}</span>{' '}
               <span data-testid="sprint-dates">
                 {s.startDate.slice(0, 10)} → {s.endDate.slice(0, 10)}
-              </span>
+              </span>{' '}
+              <Link data-testid={`burndown-link-${s.id}`} to={`/projects/${projectId}/sprints/${s.id}/burndown`}>
+                Burndown →
+              </Link>
             </li>
           ))}
         </ul>

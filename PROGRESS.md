@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~63%** (33/52 тікети). Auth повний end-to-end (refresh-токени + авто-рефреш на фронті + logout-revocation), Tasks, Sprints — повні зрізи + Kanban + rate limiting + PostgreSQL + RBAC. 143 автотести (89 unit + 30 integration + 24 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~65%** (34/52 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 150 автотестів (94 unit + 31 integration + 25 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -61,7 +61,7 @@ _Останнє оновлення: 2026-06-30_
 | AUTH-6 | Скидання/зміна пароля (forgot password flow) | Low | L | ⬜ |
 | AUTH-7 | Підтвердження email | Low | M | ⬜ |
 
-### EPIC 2 — Tasks & Projects API · готовність ~50%
+### EPIC 2 — Tasks & Projects API · готовність ~80%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | TASK-1 | CRUD-роути tasks та projects | High | M | ✅ |
@@ -96,14 +96,15 @@ _Останнє оновлення: 2026-06-30_
 | FE-8 | UI спринтів: SprintsPage (список+створення, role-gated) + дропдаун спринта на задачі | Medium | M | ✅ |
 | FE-9 | Kanban-дошка (KanbanPage) — колонки за статусом, drag&drop, нав-лінки | Medium | M | ✅ |
 | FE-10 | Авто-рефреш access-токена на 401 (single-flight) + logout-кнопка + зберігання refresh | Medium | M | ✅ |
+| FE-11 | Burndown-сторінка: SVG-графік (ideal vs remaining, без залежностей) + таблиця даних | Low | M | ✅ |
 
-### EPIC 5 — Kanban & Sprints · готовність 0%
+### EPIC 5 — Kanban & Sprints · готовність ~95%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | SPRINT-1 | API спринтів: POST/GET /projects/:id/sprints (RBAC PM) + GET /sprints/:id з задачами, валідація дат | Medium | M | ✅ |
 | SPRINT-2 | Kanban-дошка з нативним drag&drop (колонки за статусом, відкат нелегальних переходів) | Medium | L | ✅ |
 | SPRINT-3 | Додавання/винесення задач у спринт (PATCH task.sprintId) + захист від крос-проектного спринта | Low | M | ✅ |
-| SPRINT-4 | Burndown chart | Low | M | ⬜ |
+| SPRINT-4 | Burndown chart: Task.completedAt + GET /sprints/:id/burndown + SVG-графік на фронті | Low | M | ✅ |
 
 ### EPIC 6 — Notifications · готовність 0%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
@@ -119,14 +120,14 @@ _Останнє оновлення: 2026-06-30_
 | REP-2 | Velocity по спринтах | Low | M | ⬜ |
 | REP-3 | Дашборд із графіками | Low | L | ⬜ |
 
-### EPIC 8 — Testing & QA infrastructure · готовність ~30%
+### EPIC 8 — Testing & QA infrastructure · готовність ~85%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (89, 6 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (94, 6 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
-| QA-4 | Integration-тести проти реальної PostgreSQL БД (30 тестів: constraint, RBAC, пагінація, переходи, assignee, фільтри, users, sprints, sprint-assign, refresh-flow) | High | M | ✅ |
-| QA-5 | Playwright e2e (24 тести): auth (знайшов BUG-3) + tasks/фільтри/assignee + sprints + kanban + token-refresh/logout | Medium | L | ✅ |
+| QA-4 | Integration-тести проти реальної PostgreSQL БД (31 тест: + completedAt/burndown) | High | M | ✅ |
+| QA-5 | Playwright e2e (25 тестів): + burndown | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги в CI (80% backend) | Low | S | ⬜ |
 
@@ -160,7 +161,8 @@ _Останнє оновлення: 2026-06-30_
 16. ~~**RBAC-6** — ownership на редагування задач~~ ✅
 17. ~~**AUTH-3** refresh-токени + **AUTH-4** logout-revocation~~ ✅
 18. ~~FE авто-рефреш на 401~~ ✅
-19. Далі: **SPRINT-4** burndown chart, **OPS-3** Dockerfile, епіки Notifications/Reporting 👈 наступне
+19. ~~**SPRINT-4** burndown chart~~ ✅
+20. Далі: **OPS-3** Dockerfile, епіки **Notifications** / **Reporting** (0%), **RBAC-5** адмін-панель 👈 наступне
 
 ---
 

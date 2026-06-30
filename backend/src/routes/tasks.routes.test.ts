@@ -217,6 +217,28 @@ describe('PATCH /api/tasks/:id', () => {
     expect(mockTaskUpdate).toHaveBeenCalled()
   })
 
+  it('stamps completedAt when a task enters DONE', async () => {
+    mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), status: 'IN_REVIEW' })
+    mockTaskUpdate.mockResolvedValue({ ...sampleTask(), status: 'DONE' })
+
+    await auth(request(app).patch('/api/tasks/task-1')).send({ status: 'DONE' })
+
+    expect(mockTaskUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ completedAt: expect.any(Date) }) })
+    )
+  })
+
+  it('clears completedAt when a task leaves DONE', async () => {
+    mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), status: 'DONE' })
+    mockTaskUpdate.mockResolvedValue({ ...sampleTask(), status: 'IN_PROGRESS' })
+
+    await auth(request(app).patch('/api/tasks/task-1')).send({ status: 'IN_PROGRESS' })
+
+    expect(mockTaskUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ completedAt: null }) })
+    )
+  })
+
   it('allows a no-op transition to the same status (200)', async () => {
     mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), status: 'TODO' })
     mockTaskUpdate.mockResolvedValue({ ...sampleTask(), status: 'TODO' })

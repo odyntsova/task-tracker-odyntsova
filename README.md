@@ -90,4 +90,3 @@ npm test
 ## Documentation
 
 - [PROGRESS.md](PROGRESS.md) — status vs the spec's Definition of Done
-- [BUGS.md](BUGS.md) — bug registry

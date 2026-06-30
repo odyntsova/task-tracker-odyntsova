@@ -5,11 +5,9 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "start:test": "NODE_ENV=test node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --ext ts",
     "test:unit": "jest",
-    "test:integration": "DATABASE_URL=\"postgresql://kateryna@localhost:5432/tracker_test\" JWT_SECRET=\"test-secret\" jest --config jest.integration.config.js",
+    "test:integration": "DATABASE_URL=\"${DATABASE_URL:-postgresql://kateryna@localhost:5432/tracker_test}\" JWT_SECRET=\"${JWT_SECRET:-test-secret}\" jest --config jest.integration.config.js",
     "db:migrate": "prisma migrate dev"
   },
   "dependencies": {

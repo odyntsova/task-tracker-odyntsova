@@ -207,4 +207,81 @@ test.describe('Core flow (verified user)', () => {
     await page.getByTestId('filter-type').selectOption('bug')
     await expect(page.getByTestId('ticket-count')).toHaveText('40 tickets')
   })
+
+  test('board shows exactly the 5 workflow columns in order and cards show their type', async ({ page, request }) => {
+    const { token } = await verifiedSession(request, uniqueEmail('cols'))
+    const headers = { Authorization: `Bearer ${token}` }
+    const team = (await (await request.post('/api/teams', { headers, data: { name: `C ${Date.now()}` } })).json()).data
+    await request.post('/api/tickets', { headers, data: { teamId: team.id, type: 'bug', title: 'Typed card', body: 'b' } })
+
+    await gotoAs(page, token, '/board')
+    await page.getByTestId('board-team-select').selectOption({ value: team.id })
+
+    const columnIds = await page
+      .getByTestId('kanban-board')
+      .locator('[data-testid^="column-"]')
+      .evaluateAll((els) => els.map((e) => e.getAttribute('data-testid')))
+    expect(columnIds).toEqual([
+      'column-new',
+      'column-ready_for_implementation',
+      'column-in_progress',
+      'column-ready_for_acceptance',
+      'column-done',
+    ])
+
+    // the card shows its type next to the title
+    const card = page.getByTestId('column-new').locator('.ticket-card').first()
+    await expect(card).toContainText('Typed card')
+    await expect(card).toContainText('bug')
+  })
+
+  test('epics screen: create, edit, and delete an epic through the UI', async ({ page, request }) => {
+    const { token } = await verifiedSession(request, uniqueEmail('epicui'))
+    const headers = { Authorization: `Bearer ${token}` }
+    const team = (await (await request.post('/api/teams', { headers, data: { name: `EU ${Date.now()}` } })).json()).data
+
+    await gotoAs(page, token, '/epics')
+    await page.getByTestId('epic-team-select').selectOption({ value: team.id })
+
+    // create
+    await page.getByTestId('epic-title-input').fill('Checkout epic')
+    await page.getByTestId('create-epic-submit').click()
+    await expect(page.getByTestId('epics-list')).toContainText('Checkout epic')
+
+    // edit — the screen uses two prompts (title, then description)
+    let promptN = 0
+    page.on('dialog', (d) => d.accept(promptN++ === 0 ? 'Checkout epic v2' : 'a description'))
+    await page.locator('[data-testid^="edit-epic-"]').first().click()
+    await expect(page.getByTestId('epics-list')).toContainText('Checkout epic v2')
+
+    // delete
+    await page.locator('[data-testid^="delete-epic-"]').first().click()
+    await expect(page.getByTestId('epics-empty')).toBeVisible()
+  })
+
+  test('deleting a ticket is gated by a confirmation dialog', async ({ page, request }) => {
+    const { token } = await verifiedSession(request, uniqueEmail('tdel'))
+    const headers = { Authorization: `Bearer ${token}` }
+    const team = (await (await request.post('/api/teams', { headers, data: { name: `TD ${Date.now()}` } })).json()).data
+    const ticket = (await (await request.post('/api/tickets', {
+      headers,
+      data: { teamId: team.id, type: 'bug', title: 'Disposable', body: 'b' },
+    })).json()).data
+
+    await gotoAs(page, token, `/tickets/${ticket.id}`)
+    await expect(page.getByTestId('ticket-page')).toBeVisible()
+
+    // dismiss the confirm → ticket stays
+    page.once('dialog', (d) => d.dismiss())
+    await page.getByTestId('ticket-delete').click()
+    await expect(page.getByTestId('ticket-page')).toBeVisible()
+
+    // accept the confirm → ticket deleted, navigates back to the board
+    page.once('dialog', (d) => d.accept())
+    await page.getByTestId('ticket-delete').click()
+    await expect(page.getByTestId('board-page')).toBeVisible()
+
+    await page.getByTestId('board-team-select').selectOption({ value: team.id })
+    await expect(page.getByTestId('kanban-board')).not.toContainText('Disposable')
+  })
 })

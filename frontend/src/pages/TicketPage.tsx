@@ -1,7 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { teamsApi, epicsApi, ticketsApi } from '@/services/api'
-import { Loading, ErrorMessage } from '@/components/AsyncState'
+import { Loading, ErrorMessage, SuccessMessage } from '@/components/AsyncState'
 import { TICKET_TYPES, TICKET_STATES, STATE_LABEL } from '@/types'
 import { isAxiosError } from 'axios'
 import type { Team, Epic, Ticket, Comment, TicketType, TicketState } from '@/types'
@@ -17,6 +17,7 @@ export function TicketPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [saved, setSaved] = useState(false)
 
   // form fields
   const [teamId, setTeamId] = useState('')
@@ -80,6 +81,7 @@ export function TicketPage() {
   async function save(e: FormEvent) {
     e.preventDefault()
     setSaveError(null)
+    setSaved(false)
     try {
       if (isNew) {
         const { data } = await ticketsApi.create({ teamId, type, title, body, epicId: epicId || null })
@@ -87,7 +89,7 @@ export function TicketPage() {
       } else {
         const { data } = await ticketsApi.update(id!, { teamId, type, state, title, body, epicId: epicId || null })
         setTicket(data.data)
-        setSaveError(null)
+        setSaved(true)
       }
     } catch (err) {
       setSaveError(apiErr(err, 'Failed to save ticket'))
@@ -153,6 +155,7 @@ export function TicketPage() {
         <textarea data-testid="ticket-body" placeholder="Body" value={body}
           onChange={(e) => setBody(e.target.value)} required rows={4} style={{ width: '100%' }} />
         {saveError && <ErrorMessage>{saveError}</ErrorMessage>}
+        {saved && <SuccessMessage>Saved</SuccessMessage>}
         <button data-testid="ticket-save" type="submit">{isNew ? 'Create ticket' : 'Save'}</button>
         {!isNew && <button data-testid="ticket-delete" type="button" onClick={remove}>Delete</button>}
       </form>

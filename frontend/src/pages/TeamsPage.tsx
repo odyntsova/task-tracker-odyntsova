@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { teamsApi } from '@/services/api'
-import { Loading, ErrorMessage } from '@/components/AsyncState'
+import { Loading, ErrorMessage, SuccessMessage } from '@/components/AsyncState'
 import { isAxiosError } from 'axios'
 import type { Team } from '@/types'
 
@@ -10,6 +10,11 @@ export function TeamsPage() {
   const [error, setError] = useState<string | null>(null)
   const [name, setName] = useState('')
   const [actionError, setActionError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
+  function notify(msg: string) {
+    setSuccess(msg)
+    setActionError(null)
+  }
 
   function load() {
     setLoading(true)
@@ -26,9 +31,11 @@ export function TeamsPage() {
     setActionError(null)
     try {
       await teamsApi.create(name)
+      notify(`Team "${name}" created`)
       setName('')
       load()
     } catch (err) {
+      setSuccess(null)
       setActionError(apiError(err, 'Failed to create team'))
     }
   }
@@ -39,8 +46,10 @@ export function TeamsPage() {
     setActionError(null)
     try {
       await teamsApi.rename(team.id, next)
+      notify('Team renamed')
       load()
     } catch (err) {
+      setSuccess(null)
       setActionError(apiError(err, 'Failed to rename team'))
     }
   }
@@ -49,8 +58,10 @@ export function TeamsPage() {
     setActionError(null)
     try {
       await teamsApi.remove(team.id)
+      notify('Team deleted')
       load()
     } catch (err) {
+      setSuccess(null)
       setActionError(apiError(err, 'Failed to delete team'))
     }
   }
@@ -67,6 +78,7 @@ export function TeamsPage() {
         <button data-testid="create-team-submit" type="submit">Create team</button>
       </form>
       {actionError && <ErrorMessage>{actionError}</ErrorMessage>}
+      {success && <SuccessMessage>{success}</SuccessMessage>}
 
       {teams.length === 0 ? (
         <p data-testid="teams-empty">No teams yet.</p>

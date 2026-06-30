@@ -97,6 +97,9 @@ td {
 .error {
   color: var(--danger);
 }
+.success {
+  color: #067647;
+}
 
 /* Kanban board scrolls horizontally on small screens */
 [data-testid='kanban-board'] {

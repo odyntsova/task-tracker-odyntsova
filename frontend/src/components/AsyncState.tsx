@@ -12,3 +12,11 @@ export function ErrorMessage({ children }: { children: React.ReactNode }) {
     </p>
   )
 }
+
+export function SuccessMessage({ children }: { children: React.ReactNode }) {
+  return (
+    <p data-testid="success" role="status" className="success">
+      {children}
+    </p>
+  )
+}

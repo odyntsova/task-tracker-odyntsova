@@ -1,5 +1,5 @@
 import { useEffect, useState, FormEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate } from 'react-router-dom'
 import { authApi } from '@/services/api'
 
 type Status = 'idle' | 'verifying' | 'ok' | 'fail'
@@ -7,6 +7,7 @@ type Status = 'idle' | 'verifying' | 'ok' | 'fail'
 // Email-verification result screen. Accepts a token from ?token= or manual input.
 export function VerifyEmailPage() {
   const [params] = useSearchParams()
+  const navigate = useNavigate()
   const [token, setToken] = useState(params.get('token') ?? '')
   const [status, setStatus] = useState<Status>('idle')
 
@@ -15,6 +16,8 @@ export function VerifyEmailPage() {
     try {
       await authApi.verifyEmail(t)
       setStatus('ok')
+      // a successful verification leads the user to the login screen
+      setTimeout(() => navigate('/login'), 1500)
     } catch {
       setStatus('fail')
     }
@@ -35,7 +38,7 @@ export function VerifyEmailPage() {
     <main data-testid="verify-email-page">
       <h1>Email verification</h1>
       {status === 'ok' && (
-        <p data-testid="verify-ok">Your email is verified. <Link to="/login">Log in</Link>.</p>
+        <p data-testid="verify-ok">Your email is verified — redirecting to login… <Link to="/login">Log in</Link>.</p>
       )}
       {status === 'fail' && (
         <p data-testid="verify-fail" className="error">

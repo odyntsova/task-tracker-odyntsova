@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { teamsApi, epicsApi } from '@/services/api'
-import { Loading, ErrorMessage } from '@/components/AsyncState'
+import { Loading, ErrorMessage, SuccessMessage } from '@/components/AsyncState'
 import { isAxiosError } from 'axios'
 import type { Team, Epic } from '@/types'
 
@@ -11,6 +11,7 @@ export function EpicsPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionError, setActionError] = useState<string | null>(null)
+  const [success, setSuccess] = useState<string | null>(null)
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
 
@@ -39,10 +40,12 @@ export function EpicsPage() {
     setActionError(null)
     try {
       await epicsApi.create(teamId, title, description || null)
+      setSuccess(`Epic "${title}" created`)
       setTitle('')
       setDescription('')
       loadEpics(teamId)
     } catch (err) {
+      setSuccess(null)
       setActionError(apiError(err, 'Failed to create epic'))
     }
   }
@@ -54,8 +57,10 @@ export function EpicsPage() {
     setActionError(null)
     try {
       await epicsApi.update(epic.id, { title: nextTitle, description: nextDesc || null })
+      setSuccess('Epic updated')
       loadEpics(teamId)
     } catch (err) {
+      setSuccess(null)
       setActionError(apiError(err, 'Failed to update epic'))
     }
   }
@@ -64,8 +69,10 @@ export function EpicsPage() {
     setActionError(null)
     try {
       await epicsApi.remove(epic.id)
+      setSuccess('Epic deleted')
       loadEpics(teamId)
     } catch (err) {
+      setSuccess(null)
       setActionError(apiError(err, 'Failed to delete epic'))
     }
   }
@@ -97,6 +104,7 @@ export function EpicsPage() {
             <button data-testid="create-epic-submit" type="submit">Create epic</button>
           </form>
           {actionError && <ErrorMessage>{actionError}</ErrorMessage>}
+          {success && <SuccessMessage>{success}</SuccessMessage>}
 
           {epics.length === 0 ? (
             <p data-testid="epics-empty">No epics for this team.</p>

@@ -1,0 +1,64 @@
+// SQLite dev variant (fallback). The ACTIVE schema (schema.prisma) is Postgres.
+// SQLite does not support Prisma enums, so role/status/priority are String here.
+// To use SQLite locally: set DATABASE_URL="file:./dev.db" and run prisma with
+// `--schema prisma/schema.sqlite.prisma`. Note: projects.routes.ts uses
+// `as TaskStatus` (Postgres enum) — under SQLite change it back to `as string`.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("DEVELOPER") // ADMIN | DEVELOPER | QA | QA_AUTO | PM
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tasks        Task[]   @relation("assignee")
+  createdTasks Task[]   @relation("creator")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tasks       Task[]
+  sprints     Sprint[]
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("TODO")
+  priority    String   @default("MEDIUM")
+  assigneeId  String?
+  assignee    User?    @relation("assignee", fields: [assigneeId], references: [id])
+  creatorId   String
+  creator     User     @relation("creator", fields: [creatorId], references: [id])
+  projectId   String
+  project     Project  @relation(fields: [projectId], references: [id])
+  sprintId    String?
+  sprint      Sprint?  @relation(fields: [sprintId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Sprint {
+  id        String   @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  tasks     Task[]
+  createdAt DateTime @default(now())
+}

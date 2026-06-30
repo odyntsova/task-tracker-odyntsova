@@ -1,0 +1,5 @@
+dev.db
+test-integration.db
+node_modules/
+dist/
+.env

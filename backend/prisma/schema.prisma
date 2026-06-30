@@ -1,0 +1,84 @@
+// Active schema — PostgreSQL (OPS-1 completed).
+// The SQLite dev variant is preserved in schema.sqlite.prisma for reference.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  DEVELOPER
+  QA
+  QA_AUTO
+  PM
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  BLOCKED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         UserRole @default(DEVELOPER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  tasks        Task[]   @relation("assignee")
+  createdTasks Task[]   @relation("creator")
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tasks       Task[]
+  sprints     Sprint[]
+}
+
+model Task {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  status      TaskStatus   @default(TODO)
+  priority    TaskPriority @default(MEDIUM)
+  assigneeId  String?
+  assignee    User?        @relation("assignee", fields: [assigneeId], references: [id])
+  creatorId   String
+  creator     User         @relation("creator", fields: [creatorId], references: [id])
+  projectId   String
+  project     Project      @relation(fields: [projectId], references: [id])
+  sprintId    String?
+  sprint      Sprint?      @relation(fields: [sprintId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Sprint {
+  id        String   @id @default(uuid())
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id])
+  tasks     Task[]
+  createdAt DateTime @default(now())
+}

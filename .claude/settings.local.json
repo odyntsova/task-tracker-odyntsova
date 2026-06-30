@@ -1,0 +1,38 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm -v)",
+      "Bash(echo \"npm: $\\(npm -v || echo NONE\\)\")",
+      "Bash(psql --version)",
+      "Bash(echo \"psql: $\\(psql --version || echo NONE\\)\")",
+      "Bash(docker -v)",
+      "Bash(npm install *)",
+      "Bash(npx jest *)",
+      "Bash(npx prisma *)",
+      "Bash(npm run *)",
+      "Bash(npx tsc *)",
+      "Bash(curl -s http://localhost:4000/api/health)",
+      "Bash(curl -s http://localhost:3000/)",
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:4000/api/auth/register -H \"Content-Type: application/json\" -d '{\"name\":\"Olena Tester\",\"email\":\"Olena.QA@Example.COM\",\"password\":\"securepass1\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:4000/api/auth/register -H \"Content-Type: application/json\" -d '{\"name\":\"Hacker\",\"email\":\"hacker@example.com\",\"password\":\"securepass1\",\"role\":\"ADMIN\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:4000/api/auth/register -H \"Content-Type: application/json\" -d '{\"name\":\"Olena Again\",\"email\":\"olena.qa@example.com\",\"password\":\"securepass1\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:4000/api/auth/login -H \"Content-Type: application/json\" -d '{\"email\":\"OLENA.QA@example.com\",\"password\":\"securepass1\"}')",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" -X POST http://localhost:4000/api/auth/register -H \"Content-Type: application/json\" -d '{\"name\":\"Short\",\"email\":\"short@example.com\",\"password\":\"abc\"}')",
+      "Bash(npx playwright *)",
+      "Bash(node -e \"const d=JSON.parse\\(require\\('fs'\\).readFileSync\\(0\\)\\);console.log\\('total:',d.meta.total\\);d.data.forEach\\(t=>console.log\\(' -',t.title,'['+t.status+']'\\)\\)\")",
+      "Bash(brew list *)",
+      "Read(//opt/homebrew/opt/**)",
+      "Bash(brew install *)",
+      "Bash(grep -rln \"role: \\\\`\\\\${role}\" tests/integration/)",
+      "Bash(gh --version)",
+      "Bash(gh auth *)",
+      "Bash(git config *)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(grep -E \"\\\\.env$|\\\\.db$|node_modules\")",
+      "Bash(git rm *)",
+      "Bash(git commit -q -m ' *)"
+    ]
+  }
+}

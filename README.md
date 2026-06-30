@@ -1,91 +1,93 @@
-# Task Tracker
+# Ticketing System
 
-A full-stack task tracker for a cross-functional team (Developers, Manual QA, QA Automation, Product Manager). Built incrementally as complete vertical slices — each feature covered from the database up to the UI, with tests at every level of the pyramid.
+A small Kanban-style ticket tracker built as a three-tier SPA: React frontend, Express/TypeScript API, and a PostgreSQL database. Users organize work **tickets** by **team**, optionally group them under **epics**, and move them through a fixed five-state Kanban workflow.
 
-## Tech stack
+Built to the *Hackathon Ticketing System* requirements specification.
 
-- **Frontend:** React + TypeScript + Vite
-- **Backend:** Node.js + Express + TypeScript
-- **Database:** PostgreSQL 16 + Prisma ORM
-- **Testing:** Jest (unit + integration), Playwright (e2e)
-- **CI:** GitHub Actions
+## Stack
 
-## Features
+- **Frontend:** React + TypeScript + Vite (served by nginx in Docker)
+- **Backend:** Node.js + Express + TypeScript, Prisma ORM
+- **Database:** PostgreSQL 16
+- **Auth:** local email/password, bcrypt-hashed, JWT bearer tokens, email verification via SMTP
+- **Tests:** Jest (backend unit + integration on a real DB), Playwright (e2e)
 
-- **Auth** — register / login / me / logout, JWT, password hashing, rate limiting
-- **Tasks** — CRUD, status workflow state-machine, assignee, filtering / search / pagination
-- **Projects & Sprints** — sprint planning, assigning tasks to sprints
-- **RBAC** — role-based permissions (ADMIN / PM / DEVELOPER / QA / QA_AUTO)
-- **Kanban board** — drag & drop, respecting the status workflow rules
+## Run with Docker (recommended)
 
-## Testing
-
-126 automated tests, all green:
-
-| Level | Count | What it covers |
-|-------|-------|----------------|
-| Unit | 80 | route logic (mocked Prisma) |
-| Integration | 25 | real PostgreSQL — constraints, RBAC, pagination |
-| E2E | 21 | Playwright in a real browser |
-
-## Project structure
-
-```
-backend/    # Express API + Prisma (schema, migrations, tests)
-frontend/   # React app (pages, services, types)
-e2e/        # Playwright tests (Page Object Model)
-.claude/    # Claude Code role agents (dev / qa-manual / qa-auto / pm)
-```
-
-## Getting started
-
-**Prerequisites:** Node.js, PostgreSQL 16.
+From a clean checkout, at the repository root:
 
 ```bash
-# 1. Database
-createdb tracker_dev
+docker compose up --build
+```
 
-# 2. Backend
+- Frontend → **http://localhost:8080** (nginx proxies `/api` to the backend)
+- Backend API → http://localhost:4000
+- The backend applies database migrations on start. A fresh database contains **no application data** — create teams/epics/tickets through the UI or API.
+
+Only Docker / Docker Compose is required on the host. Override secrets and SMTP via environment variables (see below).
+
+### Configuration (environment variables)
+
+| Variable | Purpose | Default |
+|----------|---------|---------|
+| `JWT_SECRET` | Signs access tokens | `change-me-in-production` |
+| `SMTP_HOST` | SMTP server for verification email (e.g. `relay1.dataart.com`) | unset → emails logged to console |
+| `SMTP_PORT` / `SMTP_SECURE` | SMTP port / TLS | `25` / `false` |
+| `SMTP_USER` / `SMTP_PASS` | SMTP credentials (optional) | unset |
+| `MAIL_FROM` | From address | `no-reply@ticket-tracker.local` |
+
+Example:
+
+```bash
+JWT_SECRET=super-secret SMTP_HOST=relay1.dataart.com docker compose up --build
+```
+
+When `SMTP_HOST` is unset (local dev), verification emails are printed to the backend container logs so you can complete the flow without a mailbox.
+
+## Local development (without Docker)
+
+Requires Node.js and a running PostgreSQL.
+
+```bash
+# Database
+createdb tracker
+
+# Backend
 cd backend
-cp .env.example .env          # set DATABASE_URL + JWT_SECRET
+cp .env.example .env            # set DATABASE_URL + JWT_SECRET
 npm install
 npx prisma migrate deploy
-npm run db:seed               # seeds qa@/dev@/pm@example.com (password: password123)
-npm run dev                   # http://localhost:4000
+npm run dev                     # http://localhost:4000
 
-# 3. Frontend (separate terminal)
+# Frontend (separate terminal)
 cd frontend
 npm install
-npm run dev                   # http://localhost:3000
+npm run dev                     # http://localhost:3000 (proxies /api → :4000)
 ```
 
-## Running with Docker
+## Using the app
 
-The whole stack (PostgreSQL + backend + frontend behind nginx) runs via Docker Compose:
+1. **Sign up** with an email and password (≥ 8 chars).
+2. Open the verification email (or the backend console in dev) and **verify** the token at `/verify-email`. Unverified accounts cannot use the app; a new email can be requested from the resend screen.
+3. **Log in.**
+4. Create a **Team**, optionally some **Epics**, then **Tickets** on the **Board**. Drag cards between the five columns to change state; filter by type/epic or search by title.
 
-```bash
-JWT_SECRET=your-secret docker compose up --build
-# frontend → http://localhost:8080  (nginx proxies /api to the backend)
-# backend  → http://localhost:4000
-```
-
-- `backend/Dockerfile` — multi-stage build; on start runs `prisma migrate deploy` then the API.
-- `frontend/Dockerfile` — builds the Vite app and serves it via nginx ([nginx.conf](frontend/nginx.conf) proxies `/api`).
-- `docker-compose.yml` — wires the three services with a healthchecked Postgres volume.
-
-## Running tests
+## Tests
 
 ```bash
+# Backend (needs a `tracker_test` database for integration)
 cd backend
 npm run test:unit
-npm run test:integration      # needs a tracker_test database
+npm run test:integration
 
+# End-to-end (boots both servers)
 cd ../e2e
-npm test                      # boots both servers automatically
+npm install
+npx playwright install chromium
+npm test
 ```
 
 ## Documentation
 
-- [PROGRESS.md](PROGRESS.md) — living roadmap & status
-- [BUGS.md](BUGS.md) — bug registry with stats
-- [TEST-CASES-auth.md](TEST-CASES-auth.md) — manual QA test cases
+- [PROGRESS.md](PROGRESS.md) — status vs the spec's Definition of Done
+- [BUGS.md](BUGS.md) — bug registry

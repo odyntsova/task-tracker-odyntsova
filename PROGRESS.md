@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~85%** (48/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 209 автотестів (135 unit + 43 integration + 31 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~87%** (49/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 209 автотестів (135 unit + 43 integration + 31 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -90,7 +90,7 @@ _Останнє оновлення: 2026-06-30_
 | FE-2 | Сторінка реєстрації + лінки login↔register | High | S | ✅ |
 | FE-3 | Форма створення задачі + інлайн-зміна статусу | High | M | ✅ |
 | FE-4 | Фільтри (статус/пріоритет/assignee/пошук) + інлайн зміна статусу/пріоритету/assignee | Medium | M | ✅ |
-| FE-5 | Глобальний state (auth context, поточний юзер) | Medium | M | ⬜ |
+| FE-5 | AuthContext (user/isAdmin/logout) + useAuth; Dashboard/Admin/Sprints через контекст | Medium | M | ✅ |
 | FE-6 | Обробка помилок/лоадерів консистентно | Medium | S | ⬜ |
 | FE-7 | Адаптивна верстка + базовий дизайн | Low | L | ⬜ |
 | FE-8 | UI спринтів: SprintsPage (список+створення, role-gated) + дропдаун спринта на задачі | Medium | M | ✅ |

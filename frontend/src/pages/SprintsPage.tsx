@@ -1,14 +1,15 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { sprintsApi, authApi } from '@/services/api'
+import { sprintsApi } from '@/services/api'
+import { useAuth } from '@/context/AuthContext'
 import type { Sprint, UserRole } from '@/types'
 
 const CAN_MANAGE: UserRole[] = ['ADMIN', 'PM']
 
 export function SprintsPage() {
   const { projectId } = useParams<{ projectId: string }>()
+  const { user } = useAuth()
   const [sprints, setSprints] = useState<Sprint[]>([])
-  const [role, setRole] = useState<UserRole | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -31,10 +32,6 @@ export function SprintsPage() {
 
   useEffect(load, [projectId])
 
-  useEffect(() => {
-    authApi.me().then(({ data }) => setRole(data.data.role)).catch(() => {})
-  }, [])
-
   async function handleCreate(e: FormEvent) {
     e.preventDefault()
     if (!projectId) return
@@ -53,7 +50,7 @@ export function SprintsPage() {
     }
   }
 
-  const canManage = role !== null && CAN_MANAGE.includes(role)
+  const canManage = user !== null && CAN_MANAGE.includes(user.role)
 
   return (
     <main data-testid="sprints-page">

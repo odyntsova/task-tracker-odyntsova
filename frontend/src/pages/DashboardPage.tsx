@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { projectsApi, authApi, notificationsApi, clearTokens } from '@/services/api'
-import type { Project, Notification, User } from '@/types'
+import { projectsApi, notificationsApi } from '@/services/api'
+import { useAuth } from '@/context/AuthContext'
+import type { Project, Notification } from '@/types'
 
 export function DashboardPage() {
   const navigate = useNavigate()
+  const { isAdmin, logout } = useAuth()
   const [projects, setProjects] = useState<Project[]>([])
-  const [me, setMe] = useState<User | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -23,10 +24,6 @@ export function DashboardPage() {
     notificationsApi.list().then(({ data }) => setNotifications(data.data)).catch(() => {})
   }
   useEffect(loadNotifications, [])
-
-  useEffect(() => {
-    authApi.me().then(({ data }) => setMe(data.data)).catch(() => {})
-  }, [])
 
   const unreadCount = notifications.filter((n) => !n.readAt).length
 
@@ -50,12 +47,7 @@ export function DashboardPage() {
   }
 
   async function handleLogout() {
-    try {
-      await authApi.logout(localStorage.getItem('refreshToken'))
-    } catch {
-      // ignore — we clear locally regardless
-    }
-    clearTokens()
+    await logout()
     navigate('/login')
   }
 
@@ -68,7 +60,7 @@ export function DashboardPage() {
       <button data-testid="logout-button" onClick={handleLogout}>
         Log out
       </button>
-      {me?.role === 'ADMIN' && (
+      {isAdmin && (
         <p>
           <Link data-testid="admin-link" to="/admin">
             Admin panel →

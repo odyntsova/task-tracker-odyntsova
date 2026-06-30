@@ -1,22 +1,21 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { usersApi, authApi } from '@/services/api'
+import { usersApi } from '@/services/api'
+import { useAuth } from '@/context/AuthContext'
 import type { User, UserRole } from '@/types'
 
 const ROLES: UserRole[] = ['ADMIN', 'PM', 'DEVELOPER', 'QA', 'QA_AUTO']
 
 export function AdminPage() {
-  const [me, setMe] = useState<User | null>(null)
+  const { user: me, loading: authLoading, isAdmin } = useAuth()
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    Promise.all([authApi.me(), usersApi.list()])
-      .then(([meRes, usersRes]) => {
-        setMe(meRes.data.data)
-        setUsers(usersRes.data.data)
-      })
+    usersApi
+      .list()
+      .then((res) => setUsers(res.data.data))
       .catch(() => setError('Failed to load admin data'))
       .finally(() => setLoading(false))
   }, [])
@@ -32,10 +31,10 @@ export function AdminPage() {
     }
   }
 
-  if (loading) return <p data-testid="loading">Loading…</p>
+  if (loading || authLoading) return <p data-testid="loading">Loading…</p>
 
   // role gate — only ADMIN sees the panel
-  if (me && me.role !== 'ADMIN') {
+  if (!isAdmin) {
     return (
       <main data-testid="admin-page">
         <h1>Admin</h1>

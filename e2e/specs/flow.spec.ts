@@ -168,4 +168,43 @@ test.describe('Core flow (verified user)', () => {
     await expect(page.getByTestId('kanban-board')).toContainText('Logout hangs')
     await expect(page.getByTestId('kanban-board')).not.toContainText('Login crash')
   })
+
+  test('board stays usable with 100+ tickets (renders and filters)', async ({ page, request }) => {
+    const { token } = await verifiedSession(request, uniqueEmail('load'))
+    const headers = { Authorization: `Bearer ${token}` }
+    const team = (await (await request.post('/api/teams', { headers, data: { name: `L ${Date.now()}` } })).json()).data
+
+    const TYPES = ['bug', 'feature', 'fix']
+    const STATES = ['new', 'ready_for_implementation', 'in_progress', 'ready_for_acceptance', 'done']
+    const N = 120
+    // Create in batches rather than 120 at once: a cold dev server's connection
+    // pool can drop some of a 120-wide burst, which would flake the count below.
+    for (let start = 0; start < N; start += 20) {
+      await Promise.all(
+        Array.from({ length: Math.min(20, N - start) }, (_, j) => {
+          const i = start + j
+          return request.post('/api/tickets', {
+            headers,
+            data: {
+              teamId: team.id,
+              type: TYPES[i % 3],
+              state: STATES[i % 5],
+              title: `${i % 3 === 0 ? 'Crash' : 'Item'} ${i}`,
+              body: `b${i}`,
+            },
+          })
+        })
+      )
+    }
+
+    await gotoAs(page, token, '/board')
+    await page.getByTestId('board-team-select').selectOption({ value: team.id })
+    // all 120 render and the board is visible/usable
+    await expect(page.getByTestId('ticket-count')).toHaveText(`${N} tickets`)
+    await expect(page.getByTestId('kanban-board')).toBeVisible()
+
+    // filtering still narrows the large set: type=bug → 40 of 120
+    await page.getByTestId('filter-type').selectOption('bug')
+    await expect(page.getByTestId('ticket-count')).toHaveText('40 tickets')
+  })
 })

@@ -31,7 +31,7 @@ test.describe('Core flow (verified user)', () => {
     await page.getByTestId('board-team-select').selectOption({ label: teamName })
     const newCol = page.getByTestId('column-new')
     await expect(newCol).toContainText('Payment fails for expired card')
-    await expect(page.getByTestId('count-new')).toHaveText('(1)')
+    await expect(page.getByTestId('count-new')).toHaveText('1')
 
     // 4. drag the card to In Progress (HTML5 dnd) and verify it persists
     const card = newCol.locator('li').first()

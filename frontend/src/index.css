@@ -155,6 +155,8 @@ td {
 }
 
 .board-column {
+  flex: 1 1 0; /* every column takes an equal share of the row width */
+  min-width: 160px;
   min-height: 340px;
   display: flex;
   flex-direction: column;

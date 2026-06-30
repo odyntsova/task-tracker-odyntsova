@@ -6,9 +6,11 @@ import { projectsRouter } from './routes/projects.routes'
 import { usersRouter } from './routes/users.routes'
 import { sprintsRouter } from './routes/sprints.routes'
 import { notificationsRouter } from './routes/notifications.routes'
+import { requestLogger } from './middleware/requestLogger'
 
 export const app = express()
 
+app.use(requestLogger())
 app.use(cors({ origin: process.env.FRONTEND_URL ?? 'http://localhost:3000' }))
 app.use(express.json())
 

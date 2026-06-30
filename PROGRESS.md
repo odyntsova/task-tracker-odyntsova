@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~89%** (51/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 209 автотестів (135 unit + 43 integration + 31 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~92%** (52.5/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 210 автотестів (136 unit + 43 integration + 31 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -124,7 +124,7 @@ _Останнє оновлення: 2026-06-30_
 ### EPIC 8 — Testing & QA infrastructure · готовність ~95%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (135, 8 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (136, 9 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
 | QA-4 | Integration-тести проти реальної PostgreSQL БД (43 тести: + activity) | High | M | ✅ |
@@ -132,14 +132,14 @@ _Останнє оновлення: 2026-06-30_
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги 80% у jest.config + enforced у CI (backend-scoped job); поточно ~97% | Low | S | ✅ |
 
-### EPIC 9 — DevOps & Production-readiness · готовність ~55%
+### EPIC 9 — DevOps & Production-readiness · готовність ~80%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | OPS-1 | Перехід на PostgreSQL 16 завершено: enum-типи відновлено, міграція застосована, 126 тестів зелені на Postgres. SQLite-варіант → `schema.sqlite.prisma` | Medium | M | ✅ |
 | OPS-2 | Справжні env-секрети (JWT_SECRET зараз плейсхолдер) | High | S | ⬜ |
 | OPS-3 | Dockerfile (backend multi-stage + frontend/nginx) + docker-compose (db+api+web) | Low | M | ✅ |
-| OPS-4 | Деплой pipeline (staging/prod) | Low | L | ⬜ |
-| OPS-5 | Логування та моніторинг | Low | M | ⬜ |
+| OPS-4 | Deploy-джоба в CI (build backend/frontend images на main, placeholder push/deploy) | Low | L | 🔄 |
+| OPS-5 | Request-логування (method/path/status/duration), injectable logger + тест | Low | M | ✅ |
 
 ---
 

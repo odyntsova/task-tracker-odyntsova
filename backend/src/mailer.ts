@@ -27,6 +27,9 @@ function smtpTransport(): EmailTransport {
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT ?? 25),
     secure: process.env.SMTP_SECURE === 'true',
+    // Stable EHLO/HELO name. In Docker the default is the container id, which
+    // some relays (incl. DataArt's) treat as an untrusted greylisting key.
+    name: process.env.SMTP_HELO ?? 'ticket-tracker.local',
     auth: process.env.SMTP_USER
       ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
       : undefined,

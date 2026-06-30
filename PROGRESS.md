@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~62%** (32/52 тікети). Auth (вкл. refresh-токени + logout-revocation), Tasks, Sprints — повні зрізи + Kanban + rate limiting + PostgreSQL + RBAC. 140 автотестів (89 unit + 30 integration + 21 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~63%** (33/52 тікети). Auth повний end-to-end (refresh-токени + авто-рефреш на фронті + logout-revocation), Tasks, Sprints — повні зрізи + Kanban + rate limiting + PostgreSQL + RBAC. 143 автотести (89 unit + 30 integration + 24 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -83,7 +83,7 @@ _Останнє оновлення: 2026-06-30_
 | RBAC-5 | Адмін-панель: керування юзерами та ролями | Medium | L | ⬜ |
 | RBAC-6 | Тільки creator/assignee/ADMIN/PM може редагувати задачу (`canEditTask`) — 403 для решти | Medium | M | ✅ |
 
-### EPIC 4 — Frontend · готовність ~25%
+### EPIC 4 — Frontend · готовність ~75%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | FE-1 | Login + Dashboard + Tasks (перегляд) | High | M | ✅ |
@@ -95,6 +95,7 @@ _Останнє оновлення: 2026-06-30_
 | FE-7 | Адаптивна верстка + базовий дизайн | Low | L | ⬜ |
 | FE-8 | UI спринтів: SprintsPage (список+створення, role-gated) + дропдаун спринта на задачі | Medium | M | ✅ |
 | FE-9 | Kanban-дошка (KanbanPage) — колонки за статусом, drag&drop, нав-лінки | Medium | M | ✅ |
+| FE-10 | Авто-рефреш access-токена на 401 (single-flight) + logout-кнопка + зберігання refresh | Medium | M | ✅ |
 
 ### EPIC 5 — Kanban & Sprints · готовність 0%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
@@ -125,7 +126,7 @@ _Останнє оновлення: 2026-06-30_
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
 | QA-4 | Integration-тести проти реальної PostgreSQL БД (30 тестів: constraint, RBAC, пагінація, переходи, assignee, фільтри, users, sprints, sprint-assign, refresh-flow) | High | M | ✅ |
-| QA-5 | Playwright e2e (21 тест): auth (знайшов BUG-3) + tasks/фільтри/assignee + sprints + kanban drag&drop | Medium | L | ✅ |
+| QA-5 | Playwright e2e (24 тести): auth (знайшов BUG-3) + tasks/фільтри/assignee + sprints + kanban + token-refresh/logout | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги в CI (80% backend) | Low | S | ⬜ |
 
@@ -158,7 +159,8 @@ _Останнє оновлення: 2026-06-30_
 15. ~~**OPS-1** — перехід на PostgreSQL~~ ✅
 16. ~~**RBAC-6** — ownership на редагування задач~~ ✅
 17. ~~**AUTH-3** refresh-токени + **AUTH-4** logout-revocation~~ ✅
-18. Далі: FE авто-рефреш на 401, **SPRINT-4** burndown, **OPS-3** Dockerfile, епіки Notifications/Reporting 👈 наступне
+18. ~~FE авто-рефреш на 401~~ ✅
+19. Далі: **SPRINT-4** burndown chart, **OPS-3** Dockerfile, епіки Notifications/Reporting 👈 наступне
 
 ---
 

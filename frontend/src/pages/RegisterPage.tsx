@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { authApi } from '@/services/api'
+import { authApi, setTokens } from '@/services/api'
 import { isAxiosError } from 'axios'
 
 export function RegisterPage() {
@@ -18,7 +18,7 @@ export function RegisterPage() {
 
     try {
       const { data } = await authApi.register(name, email, password)
-      localStorage.setItem('accessToken', data.data.tokens.accessToken)
+      setTokens(data.data.tokens)
       navigate('/')
     } catch (err) {
       if (isAxiosError(err) && err.response?.status === 409) {

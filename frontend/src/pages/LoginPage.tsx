@@ -1,6 +1,6 @@
 import { useState, FormEvent } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { authApi } from '@/services/api'
+import { authApi, setTokens } from '@/services/api'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -16,7 +16,7 @@ export function LoginPage() {
 
     try {
       const { data } = await authApi.login(email, password)
-      localStorage.setItem('accessToken', data.data.tokens.accessToken)
+      setTokens(data.data.tokens)
       navigate('/')
     } catch {
       setError('Invalid email or password')

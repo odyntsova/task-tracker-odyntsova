@@ -63,6 +63,31 @@ describe('Auth: signup + verification', () => {
   })
 })
 
+describe('Auth: password reset (stretch)', () => {
+  it('forgot → reset → login with the new password; old password rejected', async () => {
+    await request(app).post('/api/auth/signup').send({ email: 'pr@example.com', password: 'oldpassword1' })
+    await request(app).post('/api/auth/forgot-password').send({ email: 'pr@example.com' })
+    const token = tokenFromLastEmail()
+
+    const reset = await request(app).post('/api/auth/reset-password').send({ token, password: 'newpassword1' })
+    expect(reset.status).toBe(200)
+
+    expect((await request(app).post('/api/auth/login').send({ email: 'pr@example.com', password: 'newpassword1' })).status).toBe(200)
+    expect((await request(app).post('/api/auth/login').send({ email: 'pr@example.com', password: 'oldpassword1' })).status).toBe(401)
+  })
+
+  it('rejects an invalid reset token (400) and re-using a spent one (400)', async () => {
+    await request(app).post('/api/auth/signup').send({ email: 'pr2@example.com', password: 'oldpassword1' })
+    await request(app).post('/api/auth/forgot-password').send({ email: 'pr2@example.com' })
+    const token = tokenFromLastEmail()
+
+    expect((await request(app).post('/api/auth/reset-password').send({ token: 'not-real', password: 'newpassword1' })).status).toBe(400)
+    expect((await request(app).post('/api/auth/reset-password').send({ token, password: 'newpassword1' })).status).toBe(200)
+    // single-use: the token is spent
+    expect((await request(app).post('/api/auth/reset-password').send({ token, password: 'another12' })).status).toBe(400)
+  })
+})
+
 describe('Auth: login + session', () => {
   it('wrong password → 401; /me requires auth', async () => {
     await request(app).post('/api/auth/signup').send({ email: 'l@example.com', password: 'password123' })

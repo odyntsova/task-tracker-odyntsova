@@ -69,6 +69,51 @@ test.describe('Core flow (verified user)', () => {
     await expect(page.getByTestId('comments-list')).toContainText('Looking into it')
   })
 
+  test('a failed move reverts the card to its original column', async ({ page, request }) => {
+    const { token } = await verifiedSession(request, uniqueEmail('revert'))
+    const headers = { Authorization: `Bearer ${token}` }
+    const team = (await (await request.post('/api/teams', { headers, data: { name: `R ${Date.now()}` } })).json()).data
+    const ticket = (await (await request.post('/api/tickets', {
+      headers,
+      data: { teamId: team.id, type: 'bug', title: 'Stays put on failure', body: 'b' },
+    })).json()).data
+
+    await gotoAs(page, token, '/board')
+    await page.getByTestId('board-team-select').selectOption({ value: team.id })
+    await expect(page.getByTestId('column-new')).toContainText('Stays put on failure')
+
+    // force the state PATCH to fail so the optimistic move must roll back
+    await page.route('**/api/tickets/**', (route) =>
+      route.request().method() === 'PATCH'
+        ? route.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' })
+        : route.continue()
+    )
+
+    const card = page.getByTestId(`card-${ticket.id}`)
+    const target = page.getByTestId('column-in_progress')
+    const failed = page.waitForResponse((r) => r.request().method() === 'PATCH' && r.status() === 500)
+    const s = await card.elementHandle()
+    const t = await target.elementHandle()
+    await page.evaluate(
+      ([src, tgt]) => {
+        const dt = new DataTransfer()
+        const fire = (el: Element, type: string) =>
+          el.dispatchEvent(new DragEvent(type, { bubbles: true, cancelable: true, dataTransfer: dt }))
+        fire(src as Element, 'dragstart')
+        fire(tgt as Element, 'dragover')
+        fire(tgt as Element, 'drop')
+        fire(src as Element, 'dragend')
+      },
+      [s, t]
+    )
+    await failed
+
+    // card rolled back to New, error shown, In Progress empty
+    await expect(page.getByTestId('column-new')).toContainText('Stays put on failure')
+    await expect(page.getByTestId('column-in_progress')).not.toContainText('Stays put on failure')
+    await expect(page.getByText(/Reverted/)).toBeVisible()
+  })
+
   test('filters narrow the board by type', async ({ page, request }) => {
     const { token } = await verifiedSession(request, uniqueEmail('filter'))
     const headers = { Authorization: `Bearer ${token}` }

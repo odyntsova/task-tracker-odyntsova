@@ -12,9 +12,9 @@
 | Suite | Type | Count | Result |
 |-------|------|-------|--------|
 | `backend` Jest unit | mocked unit | 6 | ✅ all pass |
-| `backend` Jest integration | real PostgreSQL | 21 | ✅ all pass |
-| `e2e` Playwright (Chromium, real browser) | end-to-end | 10 | ✅ all pass |
-| **Total** | | **37** | ✅ green |
+| `backend` Jest integration | real PostgreSQL | 23 | ✅ all pass |
+| `e2e` Playwright (Chromium, real browser) | end-to-end | 13 | ✅ all pass |
+| **Total** | | **42** | ✅ green |
 
 **Notes from this run:**
 - Added integration test: a legacy/bcrypt (non-argon2) hash now yields **401**, not a process crash (regression guard for the bug below).
@@ -62,7 +62,7 @@ Legend: **[A]** covered by an automated test · **[M]** manual-only check.
 - [x] **[A]** Unverified user blocked from business endpoints (403) and from /board (redirect to verify)
 - [x] **[A]** Verify with invalid/used token → error; resend invalidates the previous token
 - [x] **[A]** Verify with valid token → business endpoints unlock
-- [ ] **[M]** Password reset (forgot → email → reset → login with new password)
+- [x] **[A]** Password reset *backend*: forgot → reset → login with new password; old password rejected; token single-use (integration). **⚠ No frontend UI** — API only.
 - [ ] **[M]** Refresh-token rotation: expired access token transparently refreshes; logout invalidates refresh token
 
 ### Teams (CRUD)
@@ -90,13 +90,13 @@ Legend: **[A]** covered by an automated test · **[M]** manual-only check.
 - [x] **[A]** Drag card to another column → PATCH persists → survives refresh
 - [x] **[A]** Filter by type narrows the board and count
 - [ ] **[M]** Filter by epic + title search (case-insensitive) via UI
-- [ ] **[M]** Drag failure reverts the card to its original column
+- [x] **[A]** Drag failure reverts the card to its original column + shows "Reverted" error (e2e forces a 500 on PATCH)
 
 ### Comments
 - [x] **[A]** Add comment (author + timestamp), chronological, does not bump ticket `modifiedAt`
 - [x] **[A]** Empty comment → 422
 - [x] **[A]** Author can edit/delete own comment; non-author → 403 (backend integration)
-- [ ] **[M] ⚠ GAP** Edit/delete own comment **via the UI** has no e2e coverage (uses `prompt`/`confirm` dialogs)
+- [x] **[A]** Edit/delete own comment **via the UI** (e2e handles `prompt`/`confirm` dialogs); edit/delete controls hidden on others' comments
 
 ### Security / secrets
 - [x] **[M]** No hard-coded password or committed secret; `.env` gitignored, `.env.example` uses placeholders
@@ -175,8 +175,13 @@ Expected result: Edited text replaces the old; delete removes the comment. Edit/
 
 ## 5. Coverage gaps & recommendations
 
-1. **⚠ Comment edit/delete has no UI e2e coverage.** Backend is covered by integration tests, but the browser path (Edit/Delete buttons + `prompt`/`confirm` dialogs) is not. Recommend adding a Playwright spec that handles `page.on('dialog')`.
-2. **Password reset** flow is manual-only end-to-end. Consider an integration test for forgot→reset.
-3. **Drag-failure revert** (network error during PATCH) is implemented but not asserted by any test.
+Closed in this round:
+- ✅ Comment edit/delete via UI — new Playwright spec (`comments.spec.ts`) handles `prompt`/`confirm` and asserts controls are hidden on others' comments.
+- ✅ Password reset — new backend integration tests (forgot → reset → login; old password rejected; token single-use).
+- ✅ Drag-failure revert — new e2e forces a 500 on the PATCH and asserts the card rolls back with a "Reverted" error.
 
-**Verdict:** Build `e27a6b0` passes full regression — 37 automated tests green, the critical login-crash bug is fixed and guarded by a test. No open blockers. The gaps above are enhancements, not regressions.
+Remaining (enhancements, not regressions):
+1. **⚠ Password reset has no frontend UI** — the `forgot-password`/`reset-password` endpoints exist and are tested, but there is no page to drive them. Either build the UI or drop the endpoints to avoid dead surface.
+2. **Filter by epic + title search via UI** — covered at the API/integration level; no dedicated e2e.
+
+**Verdict:** Build passes full regression — **42 automated tests green** (6 unit + 23 integration + 13 e2e), the critical login-crash bug is fixed and guarded by a test, and the previously-noted coverage gaps are closed. No open blockers; the one notable finding is the API-only password-reset feature with no UI.

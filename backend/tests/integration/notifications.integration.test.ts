@@ -2,6 +2,11 @@ import request from 'supertest'
 import bcrypt from 'bcryptjs'
 import { PrismaClient, UserRole } from '@prisma/client'
 import { app } from '../../src/app'
+import { setEmailTransport, EmailMessage } from '../../src/mailer'
+
+// Capture emails the app tries to send (NOTIF-3).
+const sentEmails: EmailMessage[] = []
+beforeAll(() => setEmailTransport({ async send(m) { sentEmails.push(m) } }))
 
 const prisma = new PrismaClient()
 
@@ -69,6 +74,24 @@ describe('Integration: notifications (NOTIF-1/2)', () => {
 
     const after = await request(app).get('/api/notifications').set('Authorization', `Bearer ${qaToken}`)
     expect(after.body.meta.unread).toBe(0)
+  })
+
+  it('also delivers an email to the assignee on assignment (NOTIF-3)', async () => {
+    const pm = await createUser('PM', 'pm@example.com')
+    const qa = await createUser('QA', 'qa@example.com')
+    const pmToken = await loginToken('pm@example.com')
+    const project = await prisma.project.create({ data: { name: 'P' } })
+    const task = await prisma.task.create({
+      data: { title: 'Emailed task', projectId: project.id, creatorId: pm.id },
+    })
+
+    sentEmails.length = 0
+    await request(app)
+      .patch(`/api/tasks/${task.id}`)
+      .set('Authorization', `Bearer ${pmToken}`)
+      .send({ assigneeId: qa.id })
+
+    expect(sentEmails.some((e) => e.to === 'qa@example.com')).toBe(true)
   })
 
   it('a status change by someone else notifies the assignee', async () => {

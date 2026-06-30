@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { requireAuth, requireRole, AuthRequest } from '../middleware/auth'
 import { CAN_DELETE_TASKS, canEditTask } from '../permissions'
 import { canTransition, TaskStatus } from '../taskStatus'
+import { sendEmail } from '../mailer'
 
 export const tasksRouter = Router()
 const prisma = new PrismaClient()
@@ -105,24 +106,23 @@ tasksRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
   const statusChanged = parsed.data.status && parsed.data.status !== task.status
 
   if (assignmentChanged && updated.assigneeId !== actorId) {
+    const message = `You were assigned to "${updated.title}"`
     await prisma.notification.create({
-      data: {
-        userId: updated.assigneeId!,
-        type: 'TASK_ASSIGNED',
-        message: `You were assigned to "${updated.title}"`,
-        taskId: updated.id,
-      },
+      data: { userId: updated.assigneeId!, type: 'TASK_ASSIGNED', message, taskId: updated.id },
     })
+    // NOTIF-3: also deliver by email (best-effort).
+    if (updated.assignee?.email) {
+      await sendEmail({ to: updated.assignee.email, subject: 'Task assigned to you', text: message })
+    }
   }
   if (statusChanged && updated.assigneeId && updated.assigneeId !== actorId) {
+    const message = `"${updated.title}" moved to ${updated.status}`
     await prisma.notification.create({
-      data: {
-        userId: updated.assigneeId,
-        type: 'TASK_STATUS_CHANGED',
-        message: `"${updated.title}" moved to ${updated.status}`,
-        taskId: updated.id,
-      },
+      data: { userId: updated.assigneeId, type: 'TASK_STATUS_CHANGED', message, taskId: updated.id },
     })
+    if (updated.assignee?.email) {
+      await sendEmail({ to: updated.assignee.email, subject: 'Task status changed', text: message })
+    }
   }
 
   res.json({ data: updated, error: null })

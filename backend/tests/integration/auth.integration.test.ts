@@ -70,6 +70,17 @@ describe('Auth: login + session', () => {
     expect((await request(app).get('/api/auth/me')).status).toBe(401)
   })
 
+  it('a legacy/non-argon2 password hash yields 401, not a server crash', async () => {
+    // Pre-argon2 accounts stored a bcrypt hash; argon2 verify() throws on it.
+    // The login route must treat that as a mismatch instead of letting the
+    // rejection crash the process.
+    await prisma.user.create({
+      data: { email: 'legacy@example.com', passwordHash: '$2a$10$abcdefghijklmnopqrstuv', emailVerifiedAt: new Date() },
+    })
+    const res = await request(app).post('/api/auth/login').send({ email: 'legacy@example.com', password: 'whatever123' })
+    expect(res.status).toBe(401)
+  })
+
   it('/me returns the current user and verification flag, never the hash', async () => {
     const u = await prisma.user.create({
       data: { email: 'me@example.com', passwordHash: 'x', emailVerifiedAt: new Date() },

@@ -15,6 +15,16 @@ const prisma = new PrismaClient()
 const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000
 const PASSWORD_RESET_TTL_MS = 60 * 60 * 1000
 
+// argon2's verify() throws on a malformed/legacy (non-argon2) hash. An uncaught
+// throw here would crash the whole process, so treat any failure as a mismatch.
+async function verifyPassword(storedHash: string, password: string): Promise<boolean> {
+  try {
+    return await argonVerify(storedHash, password)
+  } catch {
+    return false
+  }
+}
+
 // Sign-up enforces the password policy; login only needs a non-empty password.
 const credsSchema = z.object({
   email: z.string().trim().email().toLowerCase(),
@@ -74,7 +84,7 @@ authRouter.post('/login', authLimiter, async (req, res) => {
   }
   const { email, password } = parsed.data
   const user = await prisma.user.findUnique({ where: { email } })
-  if (!user || !(await argonVerify(user.passwordHash, password))) {
+  if (!user || !(await verifyPassword(user.passwordHash, password))) {
     res.status(401).json({ data: null, error: 'Invalid email or password' })
     return
   }

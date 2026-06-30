@@ -15,6 +15,7 @@ async function cleanDb() {
   await prisma.task.deleteMany()
   await prisma.refreshToken.deleteMany()
   await prisma.passwordResetToken.deleteMany()
+  await prisma.emailVerificationToken.deleteMany()
   await prisma.notification.deleteMany()
   await prisma.project.deleteMany()
   await prisma.user.deleteMany()

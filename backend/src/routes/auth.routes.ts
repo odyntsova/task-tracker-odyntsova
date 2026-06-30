@@ -52,6 +52,7 @@ authRouter.post('/register', authLimiter, async (req, res) => {
     data: { name, email, passwordHash, role: 'DEVELOPER' },
   })
 
+  await sendVerificationEmail(user.id, user.email)
   const tokens = await issueTokens(prisma, user)
 
   res.status(201).json({
@@ -206,6 +207,47 @@ authRouter.post('/reset-password', authLimiter, async (req, res) => {
       where: { userId: record.userId, revokedAt: null },
       data: { revokedAt: new Date() },
     }),
+  ])
+
+  res.json({ data: null, error: null })
+})
+
+// --- Email verification (AUTH-7) ------------------------------------------
+
+const EMAIL_VERIFY_TTL_MS = 24 * 60 * 60 * 1000 // 24 hours
+const verifyEmailSchema = z.object({ token: z.string().min(1) })
+
+async function sendVerificationEmail(userId: string, email: string): Promise<void> {
+  const token = generateRefreshTokenValue()
+  await prisma.emailVerificationToken.create({
+    data: { tokenHash: hashToken(token), userId, expiresAt: new Date(Date.now() + EMAIL_VERIFY_TTL_MS) },
+  })
+  await sendEmail({
+    to: email,
+    subject: 'Verify your email',
+    text: `Confirm your email with this token: ${token}`,
+  })
+}
+
+authRouter.post('/verify-email', authLimiter, async (req, res) => {
+  const parsed = verifyEmailSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(422).json({ data: null, error: 'Invalid input' })
+    return
+  }
+
+  const record = await prisma.emailVerificationToken.findUnique({
+    where: { tokenHash: hashToken(parsed.data.token) },
+  })
+  const isValid = record && !record.usedAt && record.expiresAt > new Date()
+  if (!isValid) {
+    res.status(400).json({ data: null, error: 'Invalid or expired verification token' })
+    return
+  }
+
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: record.userId }, data: { emailVerifiedAt: new Date() } }),
+    prisma.emailVerificationToken.update({ where: { id: record.id }, data: { usedAt: new Date() } }),
   ])
 
   res.json({ data: null, error: null })

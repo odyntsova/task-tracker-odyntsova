@@ -12,6 +12,9 @@ const mockUserUpdate = jest.fn()
 const mockPrtCreate = jest.fn()
 const mockPrtFindUnique = jest.fn()
 const mockPrtUpdate = jest.fn()
+const mockEvtCreate = jest.fn()
+const mockEvtFindUnique = jest.fn()
+const mockEvtUpdate = jest.fn()
 const mockTransaction = jest.fn()
 
 jest.mock('@prisma/client', () => ({
@@ -27,6 +30,11 @@ jest.mock('@prisma/client', () => ({
       create: mockPrtCreate,
       findUnique: mockPrtFindUnique,
       update: mockPrtUpdate,
+    },
+    emailVerificationToken: {
+      create: mockEvtCreate,
+      findUnique: mockEvtFindUnique,
+      update: mockEvtUpdate,
     },
     $transaction: mockTransaction,
   })),
@@ -57,10 +65,14 @@ beforeEach(() => {
   mockPrtCreate.mockReset()
   mockPrtFindUnique.mockReset()
   mockPrtUpdate.mockReset()
+  mockEvtCreate.mockReset()
+  mockEvtFindUnique.mockReset()
+  mockEvtUpdate.mockReset()
   mockTransaction.mockReset()
   mockTransaction.mockResolvedValue([])
-  // issueTokens persists a refresh token on every login/register
+  // issueTokens persists a refresh token; register sends a verification email
   mockRtCreate.mockResolvedValue({ id: 'rt-1' })
+  mockEvtCreate.mockResolvedValue({ id: 'evt-1' })
 })
 
 const existingUser = () => ({
@@ -427,5 +439,43 @@ describe('POST /api/auth/reset-password (AUTH-6)', () => {
     const res = await request(app).post('/api/auth/reset-password').send({ token: 'x', password: 'short' })
     expect(res.status).toBe(422)
     expect(mockPrtFindUnique).not.toHaveBeenCalled()
+  })
+})
+
+describe('POST /api/auth/verify-email (AUTH-7)', () => {
+  const validRecord = () => ({ id: 'evt-1', userId: 'user-1', usedAt: null, expiresAt: new Date(Date.now() + 60_000) })
+
+  it('register issues a verification token', async () => {
+    mockFindUnique.mockResolvedValue(null)
+    mockCreate.mockResolvedValue({ id: 'user-2', name: 'N', email: 'n@e.com', role: 'DEVELOPER' })
+
+    await request(app).post('/api/auth/register').send({ name: 'N', email: 'n@e.com', password: 'password123' })
+
+    expect(mockEvtCreate).toHaveBeenCalled()
+  })
+
+  it('verifies the email with a valid token (200)', async () => {
+    mockEvtFindUnique.mockResolvedValue(validRecord())
+
+    const res = await request(app).post('/api/auth/verify-email').send({ token: 'valid' })
+
+    expect(res.status).toBe(200)
+    expect(mockTransaction).toHaveBeenCalled()
+  })
+
+  it('returns 400 for an unknown/expired/used token', async () => {
+    mockEvtFindUnique.mockResolvedValue(null)
+    expect((await request(app).post('/api/auth/verify-email').send({ token: 'x' })).status).toBe(400)
+
+    mockEvtFindUnique.mockResolvedValue({ ...validRecord(), usedAt: new Date() })
+    expect((await request(app).post('/api/auth/verify-email').send({ token: 'x' })).status).toBe(400)
+
+    mockEvtFindUnique.mockResolvedValue({ ...validRecord(), expiresAt: new Date(Date.now() - 1000) })
+    expect((await request(app).post('/api/auth/verify-email').send({ token: 'x' })).status).toBe(400)
+  })
+
+  it('returns 422 without a token', async () => {
+    const res = await request(app).post('/api/auth/verify-email').send({})
+    expect(res.status).toBe(422)
   })
 })

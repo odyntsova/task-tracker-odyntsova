@@ -43,14 +43,14 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~81%** (46/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 189 автотестів (127 unit + 41 integration + 30 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~83%** (47/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 192 автотести (131 unit + 42 integration + 30 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
 
 ---
 
-### EPIC 1 — Auth & Security · готовність ~95%
+### EPIC 1 — Auth & Security · готовність 100%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | AUTH-1 | Роут логіну + юніт-тести | High | M | ✅ |
@@ -59,7 +59,7 @@ _Останнє оновлення: 2026-06-30_
 | AUTH-4 | Logout відкликає refresh-токен (revokedAt); reuse → 401 | Medium | S | ✅ |
 | AUTH-5 | Rate limiting на /login та /register (in-memory, 429) — `middleware/rateLimit.ts` | Medium | S | ✅ |
 | AUTH-6 | Скидання пароля: forgot/reset (PasswordResetToken, email-токен, revoke сесій, одноразовий) | Low | L | ✅ |
-| AUTH-7 | Підтвердження email | Low | M | ⬜ |
+| AUTH-7 | Підтвердження email: EmailVerificationToken, токен при register, POST /verify-email | Low | M | ✅ |
 
 ### EPIC 2 — Tasks & Projects API · готовність ~90%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
@@ -124,10 +124,10 @@ _Останнє оновлення: 2026-06-30_
 ### EPIC 8 — Testing & QA infrastructure · готовність ~95%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (127, 8 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (131, 8 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
-| QA-4 | Integration-тести проти реальної PostgreSQL БД (41 тест: + password reset) | High | M | ✅ |
+| QA-4 | Integration-тести проти реальної PostgreSQL БД (42 тести: + email verify) | High | M | ✅ |
 | QA-5 | Playwright e2e (30 тестів): + comments | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги 80% у jest.config + enforced у CI (backend-scoped job); поточно ~97% | Low | S | ✅ |

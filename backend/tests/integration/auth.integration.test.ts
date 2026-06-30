@@ -12,6 +12,7 @@ async function cleanDb() {
   await prisma.task.deleteMany()
   await prisma.refreshToken.deleteMany()
   await prisma.passwordResetToken.deleteMany()
+  await prisma.emailVerificationToken.deleteMany()
   await prisma.notification.deleteMany()
   await prisma.project.deleteMany()
   await prisma.user.deleteMany()
@@ -290,5 +291,34 @@ describe('Integration: password reset (AUTH-6)', () => {
     await request(app).post('/api/auth/reset-password').send({ token, password: 'firstpass12' })
     const second = await request(app).post('/api/auth/reset-password').send({ token, password: 'secondpass12' })
     expect(second.status).toBe(400)
+  })
+})
+
+describe('Integration: email verification (AUTH-7)', () => {
+  const vSent: import('../../src/mailer').EmailMessage[] = []
+  beforeAll(() => {
+    const { setEmailTransport } = require('../../src/mailer')
+    setEmailTransport({ async send(m: import('../../src/mailer').EmailMessage) { vSent.push(m) } })
+  })
+
+  it('register emails a verification token; verify-email marks the user verified', async () => {
+    vSent.length = 0
+    const reg = await request(app)
+      .post('/api/auth/register')
+      .send({ name: 'V', email: 'verify@example.com', password: 'password123' })
+    expect(reg.status).toBe(201)
+
+    const verifyMail = vSent.find((m) => m.subject === 'Verify your email')
+    expect(verifyMail).toBeTruthy()
+    const token = verifyMail!.text.split(': ')[1]
+
+    const before = await prisma.user.findUnique({ where: { email: 'verify@example.com' } })
+    expect(before!.emailVerifiedAt).toBeNull()
+
+    const res = await request(app).post('/api/auth/verify-email').send({ token })
+    expect(res.status).toBe(200)
+
+    const after = await prisma.user.findUnique({ where: { email: 'verify@example.com' } })
+    expect(after!.emailVerifiedAt).not.toBeNull()
   })
 })

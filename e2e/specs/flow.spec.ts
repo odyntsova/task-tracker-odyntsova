@@ -130,4 +130,42 @@ test.describe('Core flow (verified user)', () => {
     await expect(page.getByTestId('kanban-board')).toContainText('A bug')
     await expect(page.getByTestId('kanban-board')).not.toContainText('A feature')
   })
+
+  test('filters narrow the board by epic and by case-insensitive title search', async ({ page, request }) => {
+    const { token } = await verifiedSession(request, uniqueEmail('epicfilter'))
+    const headers = { Authorization: `Bearer ${token}` }
+    const team = (await (await request.post('/api/teams', { headers, data: { name: `EF ${Date.now()}` } })).json()).data
+    const alpha = (await (await request.post('/api/epics', { headers, data: { teamId: team.id, title: 'Epic Alpha' } })).json()).data
+    const beta = (await (await request.post('/api/epics', { headers, data: { teamId: team.id, title: 'Epic Beta' } })).json()).data
+    // 3 tickets: two whose titles share "log" (case-insensitive), spread across epics
+    await request.post('/api/tickets', { headers, data: { teamId: team.id, type: 'bug', title: 'Login crash', body: 'b', epicId: alpha.id } })
+    await request.post('/api/tickets', { headers, data: { teamId: team.id, type: 'bug', title: 'Logout hangs', body: 'b', epicId: beta.id } })
+    await request.post('/api/tickets', { headers, data: { teamId: team.id, type: 'feature', title: 'Dark mode', body: 'b', epicId: beta.id } })
+
+    await gotoAs(page, token, '/board')
+    await page.getByTestId('board-team-select').selectOption({ value: team.id })
+    await expect(page.getByTestId('ticket-count')).toHaveText('3 tickets')
+
+    // filter by epic Alpha → only its single ticket remains
+    await page.getByTestId('filter-epic').selectOption({ label: 'Epic Alpha' })
+    await expect(page.getByTestId('ticket-count')).toHaveText('1 tickets')
+    await expect(page.getByTestId('kanban-board')).toContainText('Login crash')
+    await expect(page.getByTestId('kanban-board')).not.toContainText('Logout hangs')
+    await expect(page.getByTestId('kanban-board')).not.toContainText('Dark mode')
+
+    // clear, then case-insensitive title search "LOG" → both "Login crash" + "Logout hangs"
+    await page.getByTestId('filter-clear').click()
+    await expect(page.getByTestId('ticket-count')).toHaveText('3 tickets')
+    await page.getByTestId('filter-search').fill('LOG')
+    await expect(page.getByTestId('ticket-count')).toHaveText('2 tickets')
+    await expect(page.getByTestId('kanban-board')).toContainText('Login crash')
+    await expect(page.getByTestId('kanban-board')).toContainText('Logout hangs')
+    await expect(page.getByTestId('kanban-board')).not.toContainText('Dark mode')
+
+    // epic + search combine (AND): Beta epic + "log" → only "Logout hangs"
+    await page.getByTestId('filter-epic').selectOption({ label: 'Epic Beta' })
+    await expect(page.getByTestId('ticket-count')).toHaveText('1 tickets')
+    await expect(page.getByTestId('kanban-board')).toContainText('Logout hangs')
+    await expect(page.getByTestId('kanban-board')).not.toContainText('Login crash')
+  })
 })

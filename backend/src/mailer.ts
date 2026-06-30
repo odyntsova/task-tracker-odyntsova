@@ -1,10 +1,8 @@
-// Pluggable email delivery (NOTIF-3).
-//
-// The app talks to an EmailTransport interface, not a concrete provider, so the
-// transport can be swapped per environment:
-//   - dev/test: a console transport (logs; no network)
-//   - production: a real SMTP/SendGrid transport injected at startup via
-//     setEmailTransport(...) — no application code needs to change.
+import nodemailer, { Transporter } from 'nodemailer'
+
+// Email delivery. Uses a real SMTP transport when SMTP_HOST is configured
+// (the spec requires supporting relay1.dataart.com); otherwise falls back to a
+// console transport for local dev / tests. Secrets come from env, never source.
 
 export interface EmailMessage {
   to: string
@@ -18,15 +16,30 @@ export interface EmailTransport {
 
 const consoleTransport: EmailTransport = {
   async send({ to, subject }) {
-    if (process.env.NODE_ENV !== 'test') {
-      console.log(`[email] → ${to} | ${subject}`)
-    }
+    if (process.env.NODE_ENV !== 'test') console.log(`[email] → ${to} | ${subject}`)
   },
 }
 
-let transport: EmailTransport = consoleTransport
+function smtpTransport(): EmailTransport {
+  const transporter: Transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT ?? 25),
+    secure: process.env.SMTP_SECURE === 'true',
+    auth: process.env.SMTP_USER
+      ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS }
+      : undefined,
+  })
+  const from = process.env.MAIL_FROM ?? 'no-reply@ticket-tracker.local'
+  return {
+    async send({ to, subject, text }) {
+      await transporter.sendMail({ from, to, subject, text })
+    },
+  }
+}
 
-/** Swap the transport (e.g. inject SMTP in production, or a spy in tests). */
+let transport: EmailTransport = process.env.SMTP_HOST ? smtpTransport() : consoleTransport
+
+/** Override the transport (used by tests). */
 export function setEmailTransport(next: EmailTransport): void {
   transport = next
 }

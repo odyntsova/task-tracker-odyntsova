@@ -1,5 +1,4 @@
-// Active schema — PostgreSQL (OPS-1 completed).
-// The SQLite dev variant is preserved in schema.sqlite.prisma for reference.
+// Domain aligned to the Hackathon Ticketing System spec.
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,46 +8,100 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  ADMIN
-  DEVELOPER
-  QA
-  QA_AUTO
-  PM
+enum TicketType {
+  bug
+  feature
+  fix
 }
 
-enum TaskStatus {
-  TODO
-  IN_PROGRESS
-  IN_REVIEW
-  DONE
-  BLOCKED
-}
-
-enum TaskPriority {
-  LOW
-  MEDIUM
-  HIGH
-  CRITICAL
+enum TicketState {
+  new
+  ready_for_implementation
+  in_progress
+  ready_for_acceptance
+  done
 }
 
 model User {
-  id            String         @id @default(uuid())
-  name          String
-  email         String         @unique
-  passwordHash  String
-  role          UserRole       @default(DEVELOPER)
+  id              String    @id @default(uuid())
+  email           String    @unique
+  passwordHash    String
   emailVerifiedAt DateTime?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  tasks         Task[]         @relation("assignee")
-  createdTasks  Task[]         @relation("creator")
-  refreshTokens RefreshToken[]
-  notifications Notification[]
-  comments      Comment[]
-  passwordResets PasswordResetToken[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  createdTickets     Ticket[]
+  comments           Comment[]
+  refreshTokens      RefreshToken[]
+  passwordResets     PasswordResetToken[]
   emailVerifications EmailVerificationToken[]
-  activity      TaskActivity[]
+}
+
+model Team {
+  id        String   @id @default(uuid())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  epics   Epic[]
+  tickets Ticket[]
+}
+
+model Epic {
+  id          String   @id @default(uuid())
+  teamId      String
+  team        Team     @relation(fields: [teamId], references: [id])
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tickets Ticket[]
+
+  @@index([teamId])
+}
+
+model Ticket {
+  id          String      @id @default(uuid())
+  teamId      String
+  team        Team        @relation(fields: [teamId], references: [id])
+  type        TicketType
+  state       TicketState @default(new)
+  epicId      String?
+  epic        Epic?       @relation(fields: [epicId], references: [id])
+  title       String
+  body        String
+  createdById String
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdAt   DateTime    @default(now())
+  modifiedAt  DateTime    @updatedAt
+
+  comments Comment[]
+
+  @@index([teamId, state])
+  @@index([epicId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id])
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
 }
 
 model PasswordResetToken {
@@ -69,100 +122,4 @@ model EmailVerificationToken {
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
-}
-
-enum NotificationType {
-  TASK_ASSIGNED
-  TASK_STATUS_CHANGED
-}
-
-model Notification {
-  id        String           @id @default(uuid())
-  userId    String
-  user      User             @relation(fields: [userId], references: [id])
-  type      NotificationType
-  message   String
-  taskId    String?
-  readAt    DateTime?
-  createdAt DateTime         @default(now())
-
-  @@index([userId, readAt])
-}
-
-model RefreshToken {
-  id        String    @id @default(uuid())
-  tokenHash String    @unique
-  userId    String
-  user      User      @relation(fields: [userId], references: [id])
-  expiresAt DateTime
-  revokedAt DateTime?
-  createdAt DateTime  @default(now())
-}
-
-model Project {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  tasks       Task[]
-  sprints     Sprint[]
-}
-
-model Task {
-  id          String       @id @default(uuid())
-  title       String
-  description String?
-  status      TaskStatus   @default(TODO)
-  priority    TaskPriority @default(MEDIUM)
-  assigneeId  String?
-  assignee    User?        @relation("assignee", fields: [assigneeId], references: [id])
-  creatorId   String
-  creator     User         @relation("creator", fields: [creatorId], references: [id])
-  projectId   String
-  project     Project      @relation(fields: [projectId], references: [id])
-  sprintId    String?
-  sprint      Sprint?      @relation(fields: [sprintId], references: [id])
-  completedAt DateTime?    // set when status becomes DONE, cleared when it leaves DONE
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  comments    Comment[]
-  activity    TaskActivity[]
-}
-
-model TaskActivity {
-  id        String   @id @default(uuid())
-  taskId    String
-  task      Task     @relation(fields: [taskId], references: [id])
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  field     String   // status | priority | title | assignee | sprint
-  oldValue  String?
-  newValue  String?
-  createdAt DateTime @default(now())
-
-  @@index([taskId])
-}
-
-model Comment {
-  id        String   @id @default(uuid())
-  body      String
-  taskId    String
-  task      Task     @relation(fields: [taskId], references: [id])
-  authorId  String
-  author    User     @relation(fields: [authorId], references: [id])
-  createdAt DateTime @default(now())
-
-  @@index([taskId])
-}
-
-model Sprint {
-  id        String   @id @default(uuid())
-  name      String
-  startDate DateTime
-  endDate   DateTime
-  projectId String
-  project   Project  @relation(fields: [projectId], references: [id])
-  tasks     Task[]
-  createdAt DateTime @default(now())
 }

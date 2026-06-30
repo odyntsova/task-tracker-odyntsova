@@ -5,8 +5,8 @@ import { PrismaClient } from '@prisma/client'
 export const ACCESS_TOKEN_TTL = '15m'
 export const REFRESH_TOKEN_TTL_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
-export function signAccessToken(user: { id: string; role: string }): string {
-  return jwt.sign({ userId: user.id, role: user.role }, process.env.JWT_SECRET!, {
+export function signAccessToken(user: { id: string }): string {
+  return jwt.sign({ userId: user.id }, process.env.JWT_SECRET!, {
     expiresIn: ACCESS_TOKEN_TTL,
   })
 }
@@ -25,7 +25,7 @@ export function hashToken(value: string): string {
  * Issues an access token plus a fresh refresh token, persisting the refresh
  * token's hash. Returns the raw refresh token for the client.
  */
-export async function issueTokens(prisma: PrismaClient, user: { id: string; role: string }) {
+export async function issueTokens(prisma: PrismaClient, user: { id: string }) {
   const accessToken = signAccessToken(user)
   const refreshToken = generateRefreshTokenValue()
 

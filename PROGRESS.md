@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~75%** (43/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 185 автотестів (117 unit + 38 integration + 30 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~77%** (44/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 185 автотестів (117 unit + 38 integration + 30 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -121,7 +121,7 @@ _Останнє оновлення: 2026-06-30_
 | REP-2 | Velocity по спринтах (DONE per sprint) | Low | M | ✅ |
 | REP-3 | ReportPage: метрики + розбивка по статусах + velocity-бари | Low | L | ✅ |
 
-### EPIC 8 — Testing & QA infrastructure · готовність ~85%
+### EPIC 8 — Testing & QA infrastructure · готовність ~95%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | QA-1 | Юніт-тести (117, 7 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
@@ -130,7 +130,7 @@ _Останнє оновлення: 2026-06-30_
 | QA-4 | Integration-тести проти реальної PostgreSQL БД (38 тестів: + comments) | High | M | ✅ |
 | QA-5 | Playwright e2e (30 тестів): + comments | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
-| QA-7 | Coverage-пороги в CI (80% backend) | Low | S | ⬜ |
+| QA-7 | Coverage-пороги 80% у jest.config + enforced у CI (backend-scoped job); поточно ~97% | Low | S | ✅ |
 
 ### EPIC 9 — DevOps & Production-readiness · готовність ~55%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
@@ -168,7 +168,8 @@ _Останнє оновлення: 2026-06-30_
 22. ~~**OPS-3** Dockerfile/compose~~ ✅ (написано; локально не збиралось — Docker не встановлено в dev-середовищі)
 23. ~~**RBAC-5** адмін-панель~~ ✅ (EPIC RBAC 100%)
 24. ~~**TASK-6** коментарі~~ ✅
-25. Далі: **QA-7** coverage-пороги, NOTIF-3 email, AUTH-6 reset password, TASK-7 audit log, FE-7 дизайн 👈 наступне
+25. ~~**QA-7** coverage-пороги~~ ✅ (EPIC Testing ~95%)
+26. Далі: NOTIF-3 email, AUTH-6 reset password, TASK-7 audit log, FE-7 дизайн, OPS-4 деплой 👈 наступне
 
 ---
 

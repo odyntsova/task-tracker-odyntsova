@@ -7,6 +7,7 @@ import { SprintsPage } from '@/pages/SprintsPage'
 import { KanbanPage } from '@/pages/KanbanPage'
 import { BurndownPage } from '@/pages/BurndownPage'
 import { ReportPage } from '@/pages/ReportPage'
+import { AdminPage } from '@/pages/AdminPage'
 
 function isAuthenticated() {
   return !!localStorage.getItem('accessToken')
@@ -66,6 +67,14 @@ export function App() {
         element={
           <PrivateRoute>
             <ReportPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <PrivateRoute>
+            <AdminPage />
           </PrivateRoute>
         }
       />

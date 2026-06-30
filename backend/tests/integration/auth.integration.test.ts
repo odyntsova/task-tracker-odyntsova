@@ -212,3 +212,35 @@ describe('Integration: task creation + pagination on real data', () => {
     expect(page2.body.meta).toEqual({ page: 2, limit: 10, total: 25 })
   })
 })
+
+describe('Integration: role management (RBAC-5)', () => {
+  it('ADMIN promotes a user; the new role persists and is enforced', async () => {
+    await createUser('ADMIN', 'admin@example.com')
+    const dev = await createUser('DEVELOPER', 'dev@example.com')
+    const adminToken = await loginToken('admin@example.com')
+
+    const res = await request(app)
+      .patch(`/api/users/${dev.id}/role`)
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ role: 'PM' })
+
+    expect(res.status).toBe(200)
+    const stored = await prisma.user.findUnique({ where: { id: dev.id } })
+    expect(stored!.role).toBe('PM')
+  })
+
+  it('non-admin cannot change roles (403, unchanged)', async () => {
+    const dev = await createUser('DEVELOPER', 'dev@example.com')
+    await createUser('QA', 'qa@example.com')
+    const qaToken = await loginToken('qa@example.com')
+
+    const res = await request(app)
+      .patch(`/api/users/${dev.id}/role`)
+      .set('Authorization', `Bearer ${qaToken}`)
+      .send({ role: 'ADMIN' })
+
+    expect(res.status).toBe(403)
+    const stored = await prisma.user.findUnique({ where: { id: dev.id } })
+    expect(stored!.role).toBe('DEVELOPER')
+  })
+})

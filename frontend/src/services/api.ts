@@ -128,6 +128,8 @@ export const tasksApi = {
 
 export const usersApi = {
   list: () => http.get<ApiResponse<User[]>>('/users'),
+  updateRole: (id: string, role: User['role']) =>
+    http.patch<ApiResponse<User>>(`/users/${id}/role`, { role }),
 }
 
 export const notificationsApi = {

@@ -39,6 +39,17 @@ async function main() {
     },
   })
 
+  await prisma.user.upsert({
+    where: { email: 'admin@example.com' },
+    update: {},
+    create: {
+      name: 'Admin User',
+      email: 'admin@example.com',
+      passwordHash,
+      role: 'ADMIN',
+    },
+  })
+
   const project = await prisma.project.upsert({
     where: { id: 'seed-project-1' },
     update: {},
@@ -77,6 +88,7 @@ async function main() {
   console.log('Login with: qa@example.com / password123  (role QA)')
   console.log('         or dev@example.com / password123  (role DEVELOPER)')
   console.log('         or pm@example.com  / password123  (role PM)')
+  console.log('         or admin@example.com / password123  (role ADMIN)')
 }
 
 main()

@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { projectsApi, authApi, notificationsApi, clearTokens } from '@/services/api'
-import type { Project, Notification } from '@/types'
+import type { Project, Notification, User } from '@/types'
 
 export function DashboardPage() {
   const navigate = useNavigate()
   const [projects, setProjects] = useState<Project[]>([])
+  const [me, setMe] = useState<User | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -22,6 +23,10 @@ export function DashboardPage() {
     notificationsApi.list().then(({ data }) => setNotifications(data.data)).catch(() => {})
   }
   useEffect(loadNotifications, [])
+
+  useEffect(() => {
+    authApi.me().then(({ data }) => setMe(data.data)).catch(() => {})
+  }, [])
 
   const unreadCount = notifications.filter((n) => !n.readAt).length
 
@@ -63,6 +68,13 @@ export function DashboardPage() {
       <button data-testid="logout-button" onClick={handleLogout}>
         Log out
       </button>
+      {me?.role === 'ADMIN' && (
+        <p>
+          <Link data-testid="admin-link" to="/admin">
+            Admin panel →
+          </Link>
+        </p>
+      )}
 
       <section data-testid="notifications" aria-label="Notifications">
         <h2>

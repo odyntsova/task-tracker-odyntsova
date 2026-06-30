@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~72%** (41/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 167 автотестів (105 unit + 35 integration + 27 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~74%** (42/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 177 автотестів (111 unit + 37 integration + 29 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -73,14 +73,14 @@ _Останнє оновлення: 2026-06-30_
 | TASK-7 | Історія змін задачі (audit log) | Low | L | ⬜ |
 | TASK-8 | `GET /api/users` (для дропдаунів assignee, без passwordHash) | Medium | S | ✅ |
 
-### EPIC 3 — RBAC (ролі та права) · готовність ~95%
+### EPIC 3 — RBAC (ролі та права) · готовність 100%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | RBAC-1 | Middleware `requireRole` написано | High | S | ✅ |
 | RBAC-2 | Застосувати requireRole до роутів (POST /projects, DELETE /tasks → ADMIN/PM) | High | M | ✅ |
 | RBAC-3 | Матриця прав по ролях — `src/permissions.ts` | High | S | ✅ |
 | RBAC-4 | Тести на permission boundaries (403 для DEVELOPER/QA) + e2e перевірка | High | M | ✅ |
-| RBAC-5 | Адмін-панель: керування юзерами та ролями | Medium | L | ⬜ |
+| RBAC-5 | Адмін-панель: PATCH /users/:id/role (ADMIN-only, no self-change) + AdminPage (role-gated) | Medium | L | ✅ |
 | RBAC-6 | Тільки creator/assignee/ADMIN/PM може редагувати задачу (`canEditTask`) — 403 для решти | Medium | M | ✅ |
 
 ### EPIC 4 — Frontend · готовність ~75%
@@ -124,11 +124,11 @@ _Останнє оновлення: 2026-06-30_
 ### EPIC 8 — Testing & QA infrastructure · готовність ~85%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (105, 7 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (111, 7 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
-| QA-4 | Integration-тести проти реальної PostgreSQL БД (35 тестів: + report) | High | M | ✅ |
-| QA-5 | Playwright e2e (27 тестів): + report | Medium | L | ✅ |
+| QA-4 | Integration-тести проти реальної PostgreSQL БД (37 тестів: + role mgmt) | High | M | ✅ |
+| QA-5 | Playwright e2e (29 тестів): + admin panel | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги в CI (80% backend) | Low | S | ⬜ |
 
@@ -166,7 +166,8 @@ _Останнє оновлення: 2026-06-30_
 20. ~~**Notifications** (NOTIF-1/2/4)~~ ✅
 21. ~~**Reporting** епік (REP-1/2/3)~~ ✅
 22. ~~**OPS-3** Dockerfile/compose~~ ✅ (написано; локально не збиралось — Docker не встановлено в dev-середовищі)
-23. Далі: **RBAC-5** адмін-панель, **TASK-6** коментарі, NOTIF-3 email, **QA-7** coverage-пороги 👈 наступне
+23. ~~**RBAC-5** адмін-панель~~ ✅ (EPIC RBAC 100%)
+24. Далі: **TASK-6** коментарі, **QA-7** coverage-пороги, NOTIF-3 email, AUTH-6 reset password 👈 наступне
 
 ---
 

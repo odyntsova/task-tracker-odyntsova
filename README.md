@@ -59,6 +59,20 @@ npm install
 npm run dev                   # http://localhost:3000
 ```
 
+## Running with Docker
+
+The whole stack (PostgreSQL + backend + frontend behind nginx) runs via Docker Compose:
+
+```bash
+JWT_SECRET=your-secret docker compose up --build
+# frontend → http://localhost:8080  (nginx proxies /api to the backend)
+# backend  → http://localhost:4000
+```
+
+- `backend/Dockerfile` — multi-stage build; on start runs `prisma migrate deploy` then the API.
+- `frontend/Dockerfile` — builds the Vite app and serves it via nginx ([nginx.conf](frontend/nginx.conf) proxies `/api`).
+- `docker-compose.yml` — wires the three services with a healthchecked Postgres volume.
+
 ## Running tests
 
 ```bash

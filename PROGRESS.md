@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~71%** (40/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 167 автотестів (105 unit + 35 integration + 27 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~72%** (41/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 167 автотестів (105 unit + 35 integration + 27 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -132,12 +132,12 @@ _Останнє оновлення: 2026-06-30_
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги в CI (80% backend) | Low | S | ⬜ |
 
-### EPIC 9 — DevOps & Production-readiness · готовність ~35%
+### EPIC 9 — DevOps & Production-readiness · готовність ~55%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
 | OPS-1 | Перехід на PostgreSQL 16 завершено: enum-типи відновлено, міграція застосована, 126 тестів зелені на Postgres. SQLite-варіант → `schema.sqlite.prisma` | Medium | M | ✅ |
 | OPS-2 | Справжні env-секрети (JWT_SECRET зараз плейсхолдер) | High | S | ⬜ |
-| OPS-3 | Dockerfile + docker-compose | Low | M | ⬜ |
+| OPS-3 | Dockerfile (backend multi-stage + frontend/nginx) + docker-compose (db+api+web) | Low | M | ✅ |
 | OPS-4 | Деплой pipeline (staging/prod) | Low | L | ⬜ |
 | OPS-5 | Логування та моніторинг | Low | M | ⬜ |
 
@@ -165,7 +165,8 @@ _Останнє оновлення: 2026-06-30_
 19. ~~**SPRINT-4** burndown chart~~ ✅
 20. ~~**Notifications** (NOTIF-1/2/4)~~ ✅
 21. ~~**Reporting** епік (REP-1/2/3)~~ ✅
-22. Далі: **OPS-3** Dockerfile/compose, **RBAC-5** адмін-панель, NOTIF-3 email, TASK-6 коментарі 👈 наступне
+22. ~~**OPS-3** Dockerfile/compose~~ ✅ (написано; локально не збиралось — Docker не встановлено в dev-середовищі)
+23. Далі: **RBAC-5** адмін-панель, **TASK-6** коментарі, NOTIF-3 email, **QA-7** coverage-пороги 👈 наступне
 
 ---
 
@@ -177,4 +178,5 @@ _Останнє оновлення: 2026-06-30_
 - Дрібна неконсистентність API: у `POST /projects/:id/tasks` перевірка існування проекту йде до валідації тіла → невалідне тіло на неіснуючому проекті повертає 404, а не 422. Не баг, але варто узгодити порядок при рефакторингу.
 - ~~Пошук `?q=` чутливий до регістру (SQLite)~~ ✅ На Postgres увімкнено `mode: 'insensitive'` — пошук без урахування регістру.
 - Rate limiter (AUTH-5) — in-memory, per-process. Для multi-instance prod винести в Redis.
+- **OPS-3 (Docker) написано, але не зібрано локально** — Docker не встановлено в dev-середовищі. Файли (backend/frontend Dockerfile, nginx.conf, docker-compose.yml) провалідовані лише статично. Перед деплоєм: `docker compose up --build` на машині з Docker.
 - БД-міграції тепер версіонуються у `backend/prisma/migrations/` (Postgres). Деплой: `prisma migrate deploy` (вже є в CI-шаблоні).

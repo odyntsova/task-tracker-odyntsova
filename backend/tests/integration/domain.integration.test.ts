@@ -156,3 +156,32 @@ describe('Comments', () => {
     expect(after.getTime()).toBe(before.getTime()) // comments do not change the ticket
   })
 })
+
+describe('Comments: edit/delete own (stretch)', () => {
+  it('author can edit and delete their comment; non-author gets 403', async () => {
+    const team = await makeTeam()
+    const t = (await post('/api/tickets', { teamId: team.id, type: 'bug', title: 'T', body: 'B' })).body.data
+    const comment = (await post(`/api/tickets/${t.id}/comments`, { body: 'mine' })).body.data
+
+    // author edits
+    const edited = await patch(`/api/tickets/${t.id}/comments/${comment.id}`, { body: 'edited' })
+    expect(edited.status).toBe(200)
+    expect(edited.body.data.body).toBe('edited')
+
+    // another user cannot edit/delete it
+    const other = await authedUser('other@example.com')
+    const forbiddenEdit = await request(app)
+      .patch(`/api/tickets/${t.id}/comments/${comment.id}`)
+      .set('Authorization', other.auth)
+      .send({ body: 'hack' })
+    expect(forbiddenEdit.status).toBe(403)
+    const forbiddenDel = await request(app)
+      .delete(`/api/tickets/${t.id}/comments/${comment.id}`)
+      .set('Authorization', other.auth)
+    expect(forbiddenDel.status).toBe(403)
+
+    // author deletes
+    expect((await del(`/api/tickets/${t.id}/comments/${comment.id}`)).status).toBe(204)
+    expect(await prisma.comment.count({ where: { id: comment.id } })).toBe(0)
+  })
+})

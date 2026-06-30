@@ -1,6 +1,7 @@
 import { useEffect, useState, FormEvent } from 'react'
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { teamsApi, epicsApi, ticketsApi } from '@/services/api'
+import { useAuth } from '@/context/AuthContext'
 import { Loading, ErrorMessage, SuccessMessage } from '@/components/AsyncState'
 import { TICKET_TYPES, TICKET_STATES, STATE_LABEL } from '@/types'
 import { isAxiosError } from 'axios'
@@ -10,6 +11,7 @@ export function TicketPage() {
   const { id } = useParams<{ id: string }>()
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
   const isNew = !id
 
   const [teams, setTeams] = useState<Team[]>([])
@@ -118,6 +120,27 @@ export function TicketPage() {
     }
   }
 
+  async function editComment(c: Comment) {
+    const next = prompt('Edit comment', c.body)
+    if (next === null || !next.trim()) return
+    try {
+      const { data } = await ticketsApi.editComment(id!, c.id, next.trim())
+      setComments((list) => list.map((x) => (x.id === c.id ? data.data : x)))
+    } catch {
+      setSaveError('Failed to edit comment')
+    }
+  }
+
+  async function deleteComment(c: Comment) {
+    if (!confirm('Delete this comment?')) return
+    try {
+      await ticketsApi.deleteComment(id!, c.id)
+      setComments((list) => list.filter((x) => x.id !== c.id))
+    } catch {
+      setSaveError('Failed to delete comment')
+    }
+  }
+
   if (loading) return <Loading />
   if (error) return <ErrorMessage>{error}</ErrorMessage>
 
@@ -177,6 +200,12 @@ export function TicketPage() {
                   <li key={c.id} data-testid={`comment-${c.id}`}>
                     <strong>{c.author.email}</strong> · {c.createdAt.slice(0, 19).replace('T', ' ')}
                     <div>{c.body}</div>
+                    {user?.id === c.author.id && (
+                      <div>
+                        <button data-testid={`edit-comment-${c.id}`} onClick={() => editComment(c)}>Edit</button>
+                        <button data-testid={`delete-comment-${c.id}`} onClick={() => deleteComment(c)}>Delete</button>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>

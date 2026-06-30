@@ -193,3 +193,41 @@ ticketsRouter.post('/:id/comments', async (req: AuthRequest, res) => {
   })
   res.status(201).json({ data: comment, error: null })
 })
+
+// Edit / delete own comment (stretch). Only the author may modify a comment.
+ticketsRouter.patch('/:id/comments/:commentId', async (req: AuthRequest, res) => {
+  const parsed = commentSchema.safeParse(req.body)
+  if (!parsed.success) {
+    res.status(422).json({ data: null, error: 'Comment body is required' })
+    return
+  }
+  const comment = await prisma.comment.findUnique({ where: { id: req.params.commentId } })
+  if (!comment || comment.ticketId !== req.params.id) {
+    res.status(404).json({ data: null, error: 'Comment not found' })
+    return
+  }
+  if (comment.authorId !== req.userId) {
+    res.status(403).json({ data: null, error: 'You can only edit your own comments' })
+    return
+  }
+  const updated = await prisma.comment.update({
+    where: { id: comment.id },
+    data: { body: parsed.data.body },
+    include: { author: { select: { id: true, email: true } } },
+  })
+  res.json({ data: updated, error: null })
+})
+
+ticketsRouter.delete('/:id/comments/:commentId', async (req: AuthRequest, res) => {
+  const comment = await prisma.comment.findUnique({ where: { id: req.params.commentId } })
+  if (!comment || comment.ticketId !== req.params.id) {
+    res.status(404).json({ data: null, error: 'Comment not found' })
+    return
+  }
+  if (comment.authorId !== req.userId) {
+    res.status(403).json({ data: null, error: 'You can only delete your own comments' })
+    return
+  }
+  await prisma.comment.delete({ where: { id: comment.id } })
+  res.status(204).send()
+})

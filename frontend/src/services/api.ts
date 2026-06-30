@@ -119,4 +119,7 @@ export const ticketsApi = {
   remove: (id: string) => http.delete(`/tickets/${id}`),
   comments: (id: string) => http.get<ApiResponse<Comment[]>>(`/tickets/${id}/comments`),
   addComment: (id: string, body: string) => http.post<ApiResponse<Comment>>(`/tickets/${id}/comments`, { body }),
+  editComment: (id: string, commentId: string, body: string) =>
+    http.patch<ApiResponse<Comment>>(`/tickets/${id}/comments/${commentId}`, { body }),
+  deleteComment: (id: string, commentId: string) => http.delete(`/tickets/${id}/comments/${commentId}`),
 }

@@ -136,9 +136,15 @@ td {
   flex-wrap: wrap;
   margin: 12px 0;
 }
+.board-column {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
 .board-column ul {
   list-style: none;
   padding: 0;
+  flex: 1; /* fill the column so all columns are equal height */
 }
 .board-column li {
   display: block;

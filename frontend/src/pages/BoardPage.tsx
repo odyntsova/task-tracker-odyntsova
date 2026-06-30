@@ -110,7 +110,7 @@ export function BoardPage() {
 
       {moveError && <ErrorMessage>{moveError}</ErrorMessage>}
 
-      <div className="board" data-testid="kanban-board" style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <div className="board" data-testid="kanban-board" style={{ display: 'flex', gap: 12, alignItems: 'stretch' }}>
         {TICKET_STATES.map((state) => {
           const inColumn = tickets.filter((t) => t.state === state)
           return (

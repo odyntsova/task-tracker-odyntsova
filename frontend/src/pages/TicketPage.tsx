@@ -30,9 +30,10 @@ export function TicketPage() {
   const [comments, setComments] = useState<Comment[]>([])
   const [commentBody, setCommentBody] = useState('')
 
-  // initial load
+  // load on mount and whenever the route id changes (e.g. after create → details)
   useEffect(() => {
     async function init() {
+      setLoading(true)
       try {
         const t = (await teamsApi.list()).data.data
         setTeams(t)
@@ -57,7 +58,7 @@ export function TicketPage() {
     }
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [id])
 
   // epics follow the selected team
   useEffect(() => {

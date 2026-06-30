@@ -11,17 +11,19 @@ _Last updated: 2026-06-30_
 
 | # | Requirement | Backend | Frontend |
 |---|-------------|---------|----------|
-| 1 | Sign up → email verification (SMTP) → verify → log in | ✅ | ⬜ |
-| 2 | Teams managed via UI, persisted | ✅ API | ⬜ |
-| 3 | Epics managed via UI, persisted | ✅ API | ⬜ |
-| 4 | Tickets: create/view/edit/delete | ✅ API | ⬜ |
-| 5 | Comments with author + timestamp | ✅ API | ⬜ |
-| 6 | Kanban shows tickets in 5 state columns per team | ✅ data | ⬜ |
-| 7 | Drag to another column updates server, survives refresh | ✅ PATCH | ⬜ |
-| 8 | `docker compose up --build` from repo root | 🔄 needs spec-update + test |
+| 1 | Sign up → email verification (SMTP) → verify → log in | ✅ | ✅ |
+| 2 | Teams managed via UI, persisted | ✅ | ✅ |
+| 3 | Epics managed via UI, persisted (incl. edit) | ✅ | ✅ |
+| 4 | Tickets: create/view/edit/delete | ✅ | ✅ |
+| 5 | Comments with author + timestamp | ✅ | ✅ |
+| 6 | Kanban shows tickets in 5 state columns per team | ✅ | ✅ |
+| 7 | Drag to another column updates server, survives refresh | ✅ | ✅ (e2e) |
+| 8 | `docker compose up --build` from repo root | 🔄 config done; not run here (no Docker) |
 | 9 | No hard-coded password / committed secret | ✅ |
-| 10 | Fresh DB = schema + migrations only, no seed | ✅ (seed removed) |
-| 11 | QA creates all data via UI/API | ⬜ (needs FE) |
+| 10 | Fresh DB = schema + migrations only, no seed | ✅ |
+| 11 | QA creates all data via UI/API | ✅ |
+
+**Tests:** 6 unit + 19 integration (PostgreSQL) + 7 Playwright e2e — all green.
 
 ---
 
@@ -39,19 +41,17 @@ _Last updated: 2026-06-30_
 
 ## 🔜 Remaining
 
-### Phase 8 — Frontend rebuild (to spec)
-- [ ] API client → new endpoints; drop tasks/projects/sprints/notifications/reporting
-- [ ] Screens: sign-up, email-verification result, resend, login
-- [ ] Kanban board: **team selector**, 5 columns, type+epic filters + title search, counts; dnd persists + reverts on error
-- [ ] Ticket create/edit/details (+ comments)
-- [ ] Team management screen
-- [ ] Epic management screen
-- [ ] Remove old pages (Sprints/Burndown/Report/Admin/Dashboard-as-projects)
+### Phase 8 — Frontend rebuild ✅
+- [x] API client + types → new endpoints; old domain removed
+- [x] Screens: sign-up, email-verification result, resend, login
+- [x] Kanban board: team selector, 5 columns + counts, type/epic filters + title search; dnd persists + reverts on error
+- [x] Ticket create/edit/details (+ comments, delete-with-confirm)
+- [x] Team management + Epic management (full CRUD)
 
 ### Phase 9 — Compose / docs / e2e
-- [ ] `docker compose up --build` from root verified; SMTP env (`relay1.dataart.com`); fresh DB no seed
-- [ ] README: prerequisites, configuration, startup
-- [ ] Rewrite Playwright e2e for new flows; drop old-domain specs
+- [x] README rewritten to spec; docker-compose SMTP env wired; fresh DB no seed
+- [x] Playwright e2e rewritten (auth UI flows + core verified-user flow + filters)
+- [ ] `docker compose up --build` actually run on a Docker host (not possible in this dev env — no Docker installed)
 
 ---
 

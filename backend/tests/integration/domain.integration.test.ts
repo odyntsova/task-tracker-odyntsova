@@ -68,6 +68,17 @@ describe('Epics', () => {
     const res = await post('/api/epics', { teamId: '00000000-0000-0000-0000-000000000000', title: 'X' })
     expect(res.status).toBe(422)
   })
+
+  it('keeps the team fixed on update — a teamId in the body is ignored', async () => {
+    const teamA = await makeTeam('Team A')
+    const teamB = await makeTeam('Team B')
+    const epic = (await post('/api/epics', { teamId: teamA.id, title: 'E' })).body.data
+
+    const updated = await patch(`/api/epics/${epic.id}`, { title: 'E renamed', teamId: teamB.id })
+    expect(updated.status).toBe(200)
+    expect(updated.body.data.title).toBe('E renamed')
+    expect(updated.body.data.teamId).toBe(teamA.id) // unchanged despite teamB in the body
+  })
 })
 
 describe('Tickets', () => {

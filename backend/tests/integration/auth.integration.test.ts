@@ -61,6 +61,22 @@ describe('Auth: signup + verification', () => {
     expect((await request(app).post('/api/auth/verify-email').send({ token: firstToken })).status).toBe(400)
     expect((await request(app).post('/api/auth/verify-email').send({ token: secondToken })).status).toBe(200)
   })
+
+  it('rejects an expired verification token (400) and leaves the account unverified', async () => {
+    await request(app).post('/api/auth/signup').send({ email: 'exp@example.com', password: 'password123' })
+    const token = tokenFromLastEmail()
+
+    // Tokens live for 24h; force this one into the past to exercise the expiry guard.
+    const user = await prisma.user.findUnique({ where: { email: 'exp@example.com' } })
+    await prisma.emailVerificationToken.updateMany({
+      where: { userId: user!.id },
+      data: { expiresAt: new Date(Date.now() - 60_000) },
+    })
+
+    expect((await request(app).post('/api/auth/verify-email').send({ token })).status).toBe(400)
+    const after = await prisma.user.findUnique({ where: { email: 'exp@example.com' } })
+    expect(after!.emailVerifiedAt).toBeNull()
+  })
 })
 
 describe('Auth: password reset (stretch)', () => {

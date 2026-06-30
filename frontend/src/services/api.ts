@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { ApiResponse, AuthTokens, User, Task, TaskStatus, TaskPriority, Project, Sprint } from '@/types'
+import type { ApiResponse, AuthTokens, User, Task, TaskStatus, TaskPriority, Project, Sprint, Notification } from '@/types'
 
 const http = axios.create({
   baseURL: '/api',
@@ -128,6 +128,12 @@ export const tasksApi = {
 
 export const usersApi = {
   list: () => http.get<ApiResponse<User[]>>('/users'),
+}
+
+export const notificationsApi = {
+  list: () => http.get<ApiResponse<Notification[]>>('/notifications'),
+  markRead: (id: string) => http.post(`/notifications/${id}/read`),
+  markAllRead: () => http.post('/notifications/read-all'),
 }
 
 export const projectsApi = {

@@ -10,6 +10,7 @@ async function cleanDb() {
   // Delete in FK-safe order: tasks → refresh tokens → projects → users.
   await prisma.task.deleteMany()
   await prisma.refreshToken.deleteMany()
+  await prisma.notification.deleteMany()
   await prisma.project.deleteMany()
   await prisma.user.deleteMany()
 }

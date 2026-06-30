@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~65%** (34/52 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 150 автотестів (94 unit + 31 integration + 25 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~68%** (37/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 162 автотести (102 unit + 34 integration + 26 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -106,12 +106,13 @@ _Останнє оновлення: 2026-06-30_
 | SPRINT-3 | Додавання/винесення задач у спринт (PATCH task.sprintId) + захист від крос-проектного спринта | Low | M | ✅ |
 | SPRINT-4 | Burndown chart: Task.completedAt + GET /sprints/:id/burndown + SVG-графік на фронті | Low | M | ✅ |
 
-### EPIC 6 — Notifications · готовність 0%
+### EPIC 6 — Notifications · готовність ~70%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| NOTIF-1 | Нотифікації при призначенні задачі | Low | M | ⬜ |
-| NOTIF-2 | Нотифікації при зміні статусу | Low | S | ⬜ |
-| NOTIF-3 | Email/in-app доставка | Low | L | ⬜ |
+| NOTIF-1 | Нотифікації при призначенні задачі (in-app, skip self) | Low | M | ✅ |
+| NOTIF-2 | Нотифікації при зміні статусу (для assignee) | Low | S | ✅ |
+| NOTIF-3 | Email-доставка (зараз тільки in-app) | Low | L | ⬜ |
+| NOTIF-4 | API + UI: GET /notifications (+unread), mark read/read-all, панель на Dashboard | Low | M | ✅ |
 
 ### EPIC 7 — Reporting · готовність 0%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
@@ -123,11 +124,11 @@ _Останнє оновлення: 2026-06-30_
 ### EPIC 8 — Testing & QA infrastructure · готовність ~85%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (94, 6 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (102, 7 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
-| QA-4 | Integration-тести проти реальної PostgreSQL БД (31 тест: + completedAt/burndown) | High | M | ✅ |
-| QA-5 | Playwright e2e (25 тестів): + burndown | Medium | L | ✅ |
+| QA-4 | Integration-тести проти реальної PostgreSQL БД (34 тести: + notifications) | High | M | ✅ |
+| QA-5 | Playwright e2e (26 тестів): + notifications | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги в CI (80% backend) | Low | S | ⬜ |
 
@@ -162,7 +163,8 @@ _Останнє оновлення: 2026-06-30_
 17. ~~**AUTH-3** refresh-токени + **AUTH-4** logout-revocation~~ ✅
 18. ~~FE авто-рефреш на 401~~ ✅
 19. ~~**SPRINT-4** burndown chart~~ ✅
-20. Далі: **OPS-3** Dockerfile, епіки **Notifications** / **Reporting** (0%), **RBAC-5** адмін-панель 👈 наступне
+20. ~~**Notifications** (NOTIF-1/2/4)~~ ✅
+21. Далі: **Reporting** епік (0%), **OPS-3** Dockerfile, **RBAC-5** адмін-панель, NOTIF-3 email 👈 наступне
 
 ---
 

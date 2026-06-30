@@ -98,6 +98,33 @@ tasksRouter.patch('/:id', requireAuth, async (req: AuthRequest, res) => {
     include: { assignee: { select: { id: true, name: true, email: true, role: true } } },
   })
 
+  // NOTIF-1/NOTIF-2: notify the affected user (never the actor about their own action).
+  const actorId = req.userId
+  const assignmentChanged =
+    parsed.data.assigneeId !== undefined && updated.assigneeId && updated.assigneeId !== task.assigneeId
+  const statusChanged = parsed.data.status && parsed.data.status !== task.status
+
+  if (assignmentChanged && updated.assigneeId !== actorId) {
+    await prisma.notification.create({
+      data: {
+        userId: updated.assigneeId!,
+        type: 'TASK_ASSIGNED',
+        message: `You were assigned to "${updated.title}"`,
+        taskId: updated.id,
+      },
+    })
+  }
+  if (statusChanged && updated.assigneeId && updated.assigneeId !== actorId) {
+    await prisma.notification.create({
+      data: {
+        userId: updated.assigneeId,
+        type: 'TASK_STATUS_CHANGED',
+        message: `"${updated.title}" moved to ${updated.status}`,
+        taskId: updated.id,
+      },
+    })
+  }
+
   res.json({ data: updated, error: null })
 })
 

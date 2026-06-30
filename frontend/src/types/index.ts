@@ -41,6 +41,17 @@ export interface Sprint {
   projectId: string
 }
 
+export type NotificationType = 'TASK_ASSIGNED' | 'TASK_STATUS_CHANGED'
+
+export interface Notification {
+  id: string
+  type: NotificationType
+  message: string
+  taskId: string | null
+  readAt: string | null
+  createdAt: string
+}
+
 export interface ApiResponse<T> {
   data: T
   error: string | null

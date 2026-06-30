@@ -7,6 +7,7 @@ const mockTaskUpdate = jest.fn()
 const mockTaskDelete = jest.fn()
 const mockUserFindUnique = jest.fn()
 const mockSprintFindUnique = jest.fn()
+const mockNotificationCreate = jest.fn()
 
 jest.mock('@prisma/client', () => ({
   PrismaClient: jest.fn(() => ({
@@ -22,6 +23,7 @@ jest.mock('@prisma/client', () => ({
     project: { findMany: jest.fn(), findUnique: jest.fn(), create: jest.fn() },
     sprint: { findUnique: mockSprintFindUnique, findMany: jest.fn(), create: jest.fn() },
     user: { findUnique: mockUserFindUnique, create: jest.fn() },
+    notification: { create: mockNotificationCreate },
     $transaction: jest.fn(),
   })),
 }))
@@ -58,6 +60,8 @@ beforeEach(() => {
   mockTaskDelete.mockReset()
   mockUserFindUnique.mockReset()
   mockSprintFindUnique.mockReset()
+  mockNotificationCreate.mockReset()
+  mockNotificationCreate.mockResolvedValue({ id: 'notif-1' })
 })
 
 // --- Auth guard ----------------------------------------------------------
@@ -378,5 +382,48 @@ describe('DELETE /api/tasks/:id', () => {
 
     expect(res.status).toBe(404)
     expect(mockTaskDelete).not.toHaveBeenCalled()
+  })
+})
+
+describe('Notifications generated on task changes (NOTIF-1/2)', () => {
+  const ADMIN = ['admin-1', 'ADMIN'] as const
+
+  it('notifies the new assignee on assignment', async () => {
+    const assignee = '22222222-2222-2222-2222-222222222222'
+    mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), assigneeId: null })
+    mockUserFindUnique.mockResolvedValue({ id: assignee, name: 'A', email: 'a@e.com', role: 'QA' })
+    mockTaskUpdate.mockResolvedValue({ ...sampleTask(), assigneeId: assignee, title: 'Task X' })
+
+    await authAsUser(...ADMIN, request(app).patch('/api/tasks/task-1')).send({ assigneeId: assignee })
+
+    expect(mockNotificationCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ userId: assignee, type: 'TASK_ASSIGNED' }),
+      })
+    )
+  })
+
+  it('does NOT notify when a user assigns a task to themselves', async () => {
+    mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), assigneeId: null })
+    mockUserFindUnique.mockResolvedValue({ id: 'admin-1', name: 'A', email: 'a@e.com', role: 'ADMIN' })
+    mockTaskUpdate.mockResolvedValue({ ...sampleTask(), assigneeId: 'admin-1' })
+
+    await authAsUser(...ADMIN, request(app).patch('/api/tasks/task-1')).send({ assigneeId: 'admin-1' })
+
+    expect(mockNotificationCreate).not.toHaveBeenCalled()
+  })
+
+  it('notifies the assignee on a status change made by someone else', async () => {
+    const assignee = '33333333-3333-3333-3333-333333333333'
+    mockTaskFindUnique.mockResolvedValue({ ...sampleTask(), status: 'IN_REVIEW', assigneeId: assignee })
+    mockTaskUpdate.mockResolvedValue({ ...sampleTask(), status: 'DONE', assigneeId: assignee, title: 'Task Y' })
+
+    await authAsUser(...ADMIN, request(app).patch('/api/tasks/task-1')).send({ status: 'DONE' })
+
+    expect(mockNotificationCreate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ userId: assignee, type: 'TASK_STATUS_CHANGED' }),
+      })
+    )
   })
 })

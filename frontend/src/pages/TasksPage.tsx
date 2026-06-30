@@ -92,6 +92,10 @@ export function TasksPage() {
         <Link data-testid="board-link" to={`/projects/${projectId}/board`}>
           Kanban board →
         </Link>
+        {' · '}
+        <Link data-testid="report-link" to={`/projects/${projectId}/report`}>
+          Report →
+        </Link>
       </p>
 
       <form onSubmit={handleCreate} data-testid="create-task-form">

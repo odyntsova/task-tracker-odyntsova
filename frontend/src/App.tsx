@@ -6,6 +6,7 @@ import { TasksPage } from '@/pages/TasksPage'
 import { SprintsPage } from '@/pages/SprintsPage'
 import { KanbanPage } from '@/pages/KanbanPage'
 import { BurndownPage } from '@/pages/BurndownPage'
+import { ReportPage } from '@/pages/ReportPage'
 
 function isAuthenticated() {
   return !!localStorage.getItem('accessToken')
@@ -57,6 +58,14 @@ export function App() {
         element={
           <PrivateRoute>
             <BurndownPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectId/report"
+        element={
+          <PrivateRoute>
+            <ReportPage />
           </PrivateRoute>
         }
       />

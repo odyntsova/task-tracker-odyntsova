@@ -43,7 +43,7 @@ _Останнє оновлення: 2026-06-30_
 
 ## 🗺️ Роадмеп (повний обсяг)
 
-Загальна готовність продукту: **~68%** (37/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 162 автотести (102 unit + 34 integration + 26 e2e), усі зелені на Postgres.
+Загальна готовність продукту: **~71%** (40/53 тікети). Auth (повний end-to-end), Tasks, Sprints (+ Kanban + burndown) — повні зрізи + rate limiting + PostgreSQL + RBAC. 167 автотестів (105 unit + 35 integration + 27 e2e), усі зелені на Postgres.
 Обсяг: S = до пів дня, M = 1-2 дні, L = 3-5 днів, XL = тиждень+.
 
 Статуси: ⬜ to do · 🔄 in progress · ✅ done
@@ -114,21 +114,21 @@ _Останнє оновлення: 2026-06-30_
 | NOTIF-3 | Email-доставка (зараз тільки in-app) | Low | L | ⬜ |
 | NOTIF-4 | API + UI: GET /notifications (+unread), mark read/read-all, панель на Dashboard | Low | M | ✅ |
 
-### EPIC 7 — Reporting · готовність 0%
+### EPIC 7 — Reporting · готовність ~90%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| REP-1 | Метрики виконання задач | Low | M | ⬜ |
-| REP-2 | Velocity по спринтах | Low | M | ⬜ |
-| REP-3 | Дашборд із графіками | Low | L | ⬜ |
+| REP-1 | Метрики виконання задач (total/completed/rate, byStatus, byPriority) | Low | M | ✅ |
+| REP-2 | Velocity по спринтах (DONE per sprint) | Low | M | ✅ |
+| REP-3 | ReportPage: метрики + розбивка по статусах + velocity-бари | Low | L | ✅ |
 
 ### EPIC 8 — Testing & QA infrastructure · готовність ~85%
 | ID | Тікет | Пріоритет | Обсяг | Статус |
 |----|-------|-----------|-------|--------|
-| QA-1 | Юніт-тести (102, 7 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
+| QA-1 | Юніт-тести (105, 7 сьют): auth (вкл. refresh), tasks, projects, users, sprints, RBAC, transitions, filters, sprint-assign, rate-limit | High | M | ✅ |
 | QA-2 | Seed-скрипт тестових даних | Medium | S | ✅ |
 | QA-3 | CI pipeline (lint/unit/integration/e2e) | High | M | ✅ |
-| QA-4 | Integration-тести проти реальної PostgreSQL БД (34 тести: + notifications) | High | M | ✅ |
-| QA-5 | Playwright e2e (26 тестів): + notifications | Medium | L | ✅ |
+| QA-4 | Integration-тести проти реальної PostgreSQL БД (35 тестів: + report) | High | M | ✅ |
+| QA-5 | Playwright e2e (27 тестів): + report | Medium | L | ✅ |
 | QA-6 | Мануальні тест-кейси на auth-слайс — `TEST-CASES-auth.md` (33 TC + regression) | Medium | M | ✅ |
 | QA-7 | Coverage-пороги в CI (80% backend) | Low | S | ⬜ |
 
@@ -164,7 +164,8 @@ _Останнє оновлення: 2026-06-30_
 18. ~~FE авто-рефреш на 401~~ ✅
 19. ~~**SPRINT-4** burndown chart~~ ✅
 20. ~~**Notifications** (NOTIF-1/2/4)~~ ✅
-21. Далі: **Reporting** епік (0%), **OPS-3** Dockerfile, **RBAC-5** адмін-панель, NOTIF-3 email 👈 наступне
+21. ~~**Reporting** епік (REP-1/2/3)~~ ✅
+22. Далі: **OPS-3** Dockerfile/compose, **RBAC-5** адмін-панель, NOTIF-3 email, TASK-6 коментарі 👈 наступне
 
 ---
 

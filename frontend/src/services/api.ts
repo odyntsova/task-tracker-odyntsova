@@ -143,6 +143,19 @@ export const projectsApi = {
 
   create: (data: Pick<Project, 'name' | 'description'>) =>
     http.post<ApiResponse<Project>>('/projects', data),
+
+  report: (id: string) => http.get<ApiResponse<ProjectReport>>(`/projects/${id}/report`),
+}
+
+export interface ProjectReport {
+  tasks: {
+    total: number
+    completed: number
+    completionRate: number
+    byStatus: Record<string, number>
+    byPriority: Record<string, number>
+  }
+  velocity: { sprintId: string; name: string; completed: number }[]
 }
 
 export const sprintsApi = {

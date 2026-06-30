@@ -10,6 +10,7 @@ const mockTaskFindMany = jest.fn()
 const mockTaskCount = jest.fn()
 const mockSprintFindMany = jest.fn()
 const mockSprintCreate = jest.fn()
+const mockTaskGroupBy = jest.fn()
 const mockTransaction = jest.fn()
 
 jest.mock('@prisma/client', () => ({
@@ -26,6 +27,7 @@ jest.mock('@prisma/client', () => ({
       delete: jest.fn(),
       findMany: mockTaskFindMany,
       count: mockTaskCount,
+      groupBy: mockTaskGroupBy,
     },
     sprint: { findMany: mockSprintFindMany, create: mockSprintCreate },
     user: { findUnique: jest.fn(), create: jest.fn() },
@@ -59,6 +61,7 @@ beforeEach(() => {
   mockTaskCount.mockReset()
   mockSprintFindMany.mockReset()
   mockSprintCreate.mockReset()
+  mockTaskGroupBy.mockReset()
   mockTransaction.mockReset()
 })
 
@@ -389,5 +392,51 @@ describe('POST /api/projects/:id/sprints', () => {
 
     expect(res.status).toBe(404)
     expect(mockSprintCreate).not.toHaveBeenCalled()
+  })
+})
+
+describe('GET /api/projects/:id/report (REP-1/REP-2)', () => {
+  it('returns 404 for a missing project', async () => {
+    mockProjectFindUnique.mockResolvedValue(null)
+    const res = await auth(request(app).get('/api/projects/ghost/report'))
+    expect(res.status).toBe(404)
+  })
+
+  it('aggregates task metrics and per-sprint velocity', async () => {
+    mockProjectFindUnique.mockResolvedValue(sampleProject())
+    mockTaskGroupBy.mockImplementation(({ by }: { by: string[] }) => {
+      if (by.includes('status'))
+        return Promise.resolve([
+          { status: 'TODO', _count: { _all: 2 } },
+          { status: 'DONE', _count: { _all: 3 } },
+        ])
+      if (by.includes('priority')) return Promise.resolve([{ priority: 'HIGH', _count: { _all: 5 } }])
+      if (by.includes('sprintId')) return Promise.resolve([{ sprintId: 's1', _count: { _all: 3 } }])
+      return Promise.resolve([])
+    })
+    mockSprintFindMany.mockResolvedValue([{ id: 's1', name: 'Sprint 1' }])
+
+    const res = await auth(request(app).get('/api/projects/project-1/report'))
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.tasks.total).toBe(5)
+    expect(res.body.data.tasks.completed).toBe(3)
+    expect(res.body.data.tasks.completionRate).toBe(60)
+    expect(res.body.data.tasks.byStatus).toMatchObject({ TODO: 2, DONE: 3, IN_PROGRESS: 0 })
+    expect(res.body.data.tasks.byPriority).toMatchObject({ HIGH: 5, LOW: 0 })
+    expect(res.body.data.velocity).toEqual([{ sprintId: 's1', name: 'Sprint 1', completed: 3 }])
+  })
+
+  it('handles an empty project (completionRate 0)', async () => {
+    mockProjectFindUnique.mockResolvedValue(sampleProject())
+    mockTaskGroupBy.mockResolvedValue([])
+    mockSprintFindMany.mockResolvedValue([])
+
+    const res = await auth(request(app).get('/api/projects/project-1/report'))
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.tasks.total).toBe(0)
+    expect(res.body.data.tasks.completionRate).toBe(0)
+    expect(res.body.data.velocity).toEqual([])
   })
 })

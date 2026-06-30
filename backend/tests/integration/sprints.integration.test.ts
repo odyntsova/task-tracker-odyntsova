@@ -184,3 +184,30 @@ describe('Integration: sprints on real data', () => {
     expect(res.body.data.tasks[0].title).toBe('Sprint task')
   })
 })
+
+describe('Integration: project report (REP-1/REP-2)', () => {
+  it('aggregates task status counts, completion rate and sprint velocity', async () => {
+    const pm = await createUser('PM', 'pm@example.com')
+    const token = await loginToken('pm@example.com')
+    const project = await prisma.project.create({ data: { name: 'Report P' } })
+    const sprint = await prisma.sprint.create({
+      data: { name: 'S1', startDate: new Date('2026-07-01'), endDate: new Date('2026-07-14'), projectId: project.id },
+    })
+    // 3 tasks: 2 DONE (in sprint), 1 TODO
+    await prisma.task.create({ data: { title: 'd1', status: 'DONE', projectId: project.id, creatorId: pm.id, sprintId: sprint.id } })
+    await prisma.task.create({ data: { title: 'd2', status: 'DONE', projectId: project.id, creatorId: pm.id, sprintId: sprint.id } })
+    await prisma.task.create({ data: { title: 't1', status: 'TODO', projectId: project.id, creatorId: pm.id } })
+
+    const res = await request(app)
+      .get(`/api/projects/${project.id}/report`)
+      .set('Authorization', `Bearer ${token}`)
+
+    expect(res.status).toBe(200)
+    expect(res.body.data.tasks.total).toBe(3)
+    expect(res.body.data.tasks.completed).toBe(2)
+    expect(res.body.data.tasks.completionRate).toBe(67) // 2/3 rounded
+    expect(res.body.data.tasks.byStatus.DONE).toBe(2)
+    expect(res.body.data.tasks.byStatus.TODO).toBe(1)
+    expect(res.body.data.velocity).toEqual([{ sprintId: sprint.id, name: 'S1', completed: 2 }])
+  })
+})

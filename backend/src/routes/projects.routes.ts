@@ -166,3 +166,55 @@ projectsRouter.post(
     res.status(201).json({ data: sprint, error: null })
   }
 )
+
+// --- Reporting (REP-1 + REP-2) ---------------------------------------------
+
+const STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'IN_REVIEW', 'DONE', 'BLOCKED']
+const PRIORITIES: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']
+
+projectsRouter.get('/:id/report', requireAuth, async (req, res) => {
+  const project = await prisma.project.findUnique({ where: { id: req.params.id } })
+  if (!project) {
+    res.status(404).json({ data: null, error: 'Project not found' })
+    return
+  }
+
+  const [byStatusRaw, byPriorityRaw, sprints, doneBySprintRaw] = await Promise.all([
+    prisma.task.groupBy({ by: ['status'], where: { projectId: req.params.id }, _count: { _all: true } }),
+    prisma.task.groupBy({ by: ['priority'], where: { projectId: req.params.id }, _count: { _all: true } }),
+    prisma.sprint.findMany({ where: { projectId: req.params.id }, orderBy: { startDate: 'asc' } }),
+    prisma.task.groupBy({
+      by: ['sprintId'],
+      where: { projectId: req.params.id, status: 'DONE' },
+      _count: { _all: true },
+    }),
+  ])
+
+  // normalise group-by results into full maps (every enum key present)
+  const byStatus = Object.fromEntries(STATUSES.map((s) => [s, 0])) as Record<TaskStatus, number>
+  byStatusRaw.forEach((r) => (byStatus[r.status as TaskStatus] = r._count._all))
+  const byPriority = Object.fromEntries(PRIORITIES.map((p) => [p, 0])) as Record<TaskPriority, number>
+  byPriorityRaw.forEach((r) => (byPriority[r.priority as TaskPriority] = r._count._all))
+
+  const total = STATUSES.reduce((sum, s) => sum + byStatus[s], 0)
+  const completed = byStatus.DONE
+  const completionRate = total === 0 ? 0 : Math.round((completed / total) * 100)
+
+  const doneBySprint = new Map<string, number>()
+  doneBySprintRaw.forEach((r) => {
+    if (r.sprintId) doneBySprint.set(r.sprintId, r._count._all)
+  })
+  const velocity = sprints.map((s) => ({
+    sprintId: s.id,
+    name: s.name,
+    completed: doneBySprint.get(s.id) ?? 0,
+  }))
+
+  res.json({
+    data: {
+      tasks: { total, completed, completionRate, byStatus, byPriority },
+      velocity,
+    },
+    error: null,
+  })
+})

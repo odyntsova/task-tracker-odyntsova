@@ -1,9 +1,9 @@
 # Regression Report — Hackathon Ticketing System
 
-**Date:** 2026-07-01 (updated; supersedes the 2026-06-30 run)
-**Build under test:** commit `526933c`
+**Date:** 2026-07-01 (re-run; supersedes the earlier 2026-07-01 run at `526933c`)
+**Build under test:** commit `c044db7` + uncommitted Docker→Podman migration (docs/config only; no app code changed)
 **Performed by:** QA team (QA-Auto automated suites + QA-Manual checklist)
-**Trigger:** Full regression + spec reconciliation; real-SMTP verification; coverage-gap closure.
+**Trigger:** Re-run after migrating the container runtime off Docker Desktop to **Podman** (DataArt policy). Confirm suites stay green and the containerized stack still comes up + serves the full flow under Podman.
 
 ---
 
@@ -15,12 +15,13 @@
 | `backend` Jest integration | real PostgreSQL | 25 | ✅ all pass |
 | `e2e` Playwright (Chromium, real browser) | end-to-end | 21 | ✅ all pass |
 | **Total** | | **56** | ✅ green |
-| Live smoke (running docker stack) | runtime | 22 | ✅ all pass |
+| Live smoke (running **Podman** stack) | runtime | ✓ | ✅ all pass |
 
 **Notes from this run:**
-- Real SMTP delivery via `relay1.dataart.com` verified end-to-end (signup → email → inbox → verify). Hardened the mailer (background send + retry-with-backoff) — see BUG-REPORT.md BR-01/BR-02.
-- Coverage gaps closed since the 45-test run: filter-by-epic + case-insensitive search (e2e), 100+ tickets (runtime + e2e), 5-columns/card-type (e2e), epic CRUD screen (e2e), ticket-delete confirmation (e2e), verify-token 24h expiry + epic team-immutability (integration).
-- Fresh-DB / no-seed re-verified at runtime (fresh DB → 0 rows; migrations carry 0 inserts).
+- **Runtime migrated to Podman.** Docker Desktop was removed (DataArt policy — Docker Products unapproved). Stack built and run with `podman compose up --build` (Podman 6.0, applehv machine, native `podman-compose` provider). The `Dockerfile`/`docker-compose.yml` are unchanged — standard OCI, portable. No app code changed; only docs/CI comments reworded.
+- **Live smoke on the Podman stack — all pass:** images build; `db`+`backend`+`frontend` come up (db healthy); `GET /api/health` 200; frontend serves at :8080; nginx proxies `/api` → backend (200); full flow **signup 201 → email-token → verify 200 → login (JWT) → GET /teams 200 (verified unlock) → POST /teams 201**; fresh DB → 0 rows (no seed).
+- Automated suites unchanged from `526933c`: 10 unit + 25 integration + 21 e2e, all green, run against local PostgreSQL (no container needed).
+- **Test-env note (not a bug):** a root `.env` sets `SMTP_HOST=relay1.dataart.com`, which `podman compose` loads → the containerized backend uses the *real* SMTP transport, so the verification token is not printed to the console. For a self-contained smoke, run with `SMTP_HOST=` (empty) to use the console transport and read the token from `podman logs`. Real-SMTP delivery via `relay1.dataart.com` + mailer retry/backoff remain covered (BUG-REPORT.md BR-01/BR-02).
 
 ---
 
@@ -106,10 +107,11 @@ Legend: **[A]** covered by an automated test · **[M]** manual-only check.
 - [x] **[A]** `/me` never returns `passwordHash`
 - [ ] **[M]** SMTP credentials only via env, never logged
 
-### Docker / deployment
-- [x] **[M]** `docker compose up --build` brings up db + backend + frontend; signup→verify→login works
-- [x] **[M]** Fresh DB = schema + migrations only, no seed data
-- [x] **[M]** Frontend nginx proxies `/api` → backend; board reachable at :8080
+### Container runtime / deployment (Podman)
+- [x] **[M]** `podman compose up --build` brings up db + backend + frontend; signup→verify→login works
+- [x] **[M]** Fresh DB = schema + migrations only, no seed data (verified: 0 teams before create)
+- [x] **[M]** Frontend nginx proxies `/api` → backend; reachable at :8080
+- [x] **[M]** Runs on approved runtime (Podman); no Docker Desktop / Docker binaries present
 
 ---
 
@@ -191,8 +193,12 @@ Closed since (2026-07-01):
 - ✅ Verify-token 24h expiry + epic team-immutability — integration.
 - ✅ Real SMTP (relay1.dataart.com) end-to-end + mailer retry/backoff.
 
+Verified this round:
+- ✅ Container runtime migrated Docker Desktop → **Podman**; full stack builds and runs the complete flow under `podman compose`.
+
 Remaining (not regressions):
 1. Refresh-token rotation / logout invalidation — manual-only, not yet automated.
-2. Pre-submission: clear the docker DB of manually-created data (see BUG-REPORT.md BR-06).
+2. Pre-submission: clear the compose DB of manually-created smoke data (see BUG-REPORT.md BR-06).
+3. Root `.env` carries `SMTP_HOST=relay1.dataart.com`; unset it for a self-contained (console-transport) container smoke.
 
-**Verdict:** Build passes full regression — **56 automated tests green** (10 unit + 25 integration + 21 e2e) plus a 22/22 live smoke on the running stack. Every mandatory spec item is covered; stretch features present; out-of-scope items absent. No open blockers.
+**Verdict:** Build passes full regression — **56 automated tests green** (10 unit + 25 integration + 21 e2e) plus a full live smoke on the running **Podman** stack (build → up → health → signup→verify→login→create-team → fresh-DB). Runtime migration to Podman introduced no regressions; no app code changed. Every mandatory spec item covered; no open blockers.

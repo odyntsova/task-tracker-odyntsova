@@ -1,9 +1,9 @@
 # Regression Report — Hackathon Ticketing System
 
-**Date:** 2026-06-30
-**Build under test:** commit `e27a6b0` (`fix(auth): don't crash on legacy/non-argon2 password hash`)
+**Date:** 2026-07-01 (updated; supersedes the 2026-06-30 run)
+**Build under test:** commit `526933c`
 **Performed by:** QA team (QA-Auto automated suites + QA-Manual checklist)
-**Trigger:** Argon2id migration + login-crash fix; full regression requested.
+**Trigger:** Full regression + spec reconciliation; real-SMTP verification; coverage-gap closure.
 
 ---
 
@@ -11,14 +11,16 @@
 
 | Suite | Type | Count | Result |
 |-------|------|-------|--------|
-| `backend` Jest unit | mocked unit | 6 | ✅ all pass |
-| `backend` Jest integration | real PostgreSQL | 23 | ✅ all pass |
-| `e2e` Playwright (Chromium, real browser) | end-to-end | 16 | ✅ all pass |
-| **Total** | | **45** | ✅ green |
+| `backend` Jest unit | mocked unit | 10 | ✅ all pass |
+| `backend` Jest integration | real PostgreSQL | 25 | ✅ all pass |
+| `e2e` Playwright (Chromium, real browser) | end-to-end | 21 | ✅ all pass |
+| **Total** | | **56** | ✅ green |
+| Live smoke (running docker stack) | runtime | 22 | ✅ all pass |
 
 **Notes from this run:**
-- Added integration test: a legacy/bcrypt (non-argon2) hash now yields **401**, not a process crash (regression guard for the bug below).
-- Fixed a stale e2e assertion: after the board restyle the column counter renders `1` (pill badge), not `(1)`. Test updated — **app behaviour was correct**, the test was outdated.
+- Real SMTP delivery via `relay1.dataart.com` verified end-to-end (signup → email → inbox → verify). Hardened the mailer (background send + retry-with-backoff) — see BUG-REPORT.md BR-01/BR-02.
+- Coverage gaps closed since the 45-test run: filter-by-epic + case-insensitive search (e2e), 100+ tickets (runtime + e2e), 5-columns/card-type (e2e), epic CRUD screen (e2e), ticket-delete confirmation (e2e), verify-token 24h expiry + epic team-immutability (integration).
+- Fresh-DB / no-seed re-verified at runtime (fresh DB → 0 rows; migrations carry 0 inserts).
 
 ---
 
@@ -74,7 +76,7 @@ Legend: **[A]** covered by an automated test · **[M]** manual-only check.
 ### Epics (CRUD)
 - [x] **[A]** Create under a team; reject under non-existent team (422)
 - [x] **[A]** Delete epic referenced by a ticket → 409 ("Cannot delete an epic…")
-- [ ] **[M]** Edit epic title/description persists
+- [x] **[A]** Edit epic title/description persists (e2e epics screen); team fixed on update (integration)
 
 ### Tickets (CRUD + rules)
 - [x] **[A]** Create with required fields; `createdBy` from token; default state `new`
@@ -89,7 +91,8 @@ Legend: **[A]** covered by an automated test · **[M]** manual-only check.
 - [x] **[A]** Board shows 5 state columns per team with counts
 - [x] **[A]** Drag card to another column → PATCH persists → survives refresh
 - [x] **[A]** Filter by type narrows the board and count
-- [ ] **[M]** Filter by epic + title search (case-insensitive) via UI
+- [x] **[A]** Filter by epic + title search (case-insensitive) via UI
+- [x] **[A]** Board usable with 100+ tickets (120 rendered + filter narrows); exactly 5 columns in order; card shows type
 - [x] **[A]** Drag failure reverts the card to its original column + shows "Reverted" error (e2e forces a 500 on PATCH)
 
 ### Comments
@@ -180,7 +183,16 @@ Closed in this round:
 - ✅ Password reset — now end-to-end: forgot/reset **UI pages** (`password-reset.spec.ts`) plus backend integration tests (forgot → reset → login; old password rejected; token single-use). The earlier "API-only, no UI" finding is resolved.
 - ✅ Drag-failure revert — new e2e forces a 500 on the PATCH and asserts the card rolls back with a "Reverted" error.
 
-Remaining (enhancements, not regressions):
-1. **Filter by epic + title search via UI** — covered at the API/integration level; no dedicated e2e.
+Closed since (2026-07-01):
+- ✅ Filter by epic + case-insensitive title search — dedicated e2e added.
+- ✅ Board usable with 100+ tickets — runtime measurement (board list median 4 ms on 120) + e2e.
+- ✅ Exactly 5 workflow columns in order + card shows type — e2e.
+- ✅ Epic CRUD screen via UI; ticket delete confirmation dialog — e2e.
+- ✅ Verify-token 24h expiry + epic team-immutability — integration.
+- ✅ Real SMTP (relay1.dataart.com) end-to-end + mailer retry/backoff.
 
-**Verdict:** Build passes full regression — **45 automated tests green** (6 unit + 23 integration + 16 e2e), the critical login-crash bug is fixed and guarded by a test, and the previously-noted coverage gaps are closed. No open blockers.
+Remaining (not regressions):
+1. Refresh-token rotation / logout invalidation — manual-only, not yet automated.
+2. Pre-submission: clear the docker DB of manually-created data (see BUG-REPORT.md BR-06).
+
+**Verdict:** Build passes full regression — **56 automated tests green** (10 unit + 25 integration + 21 e2e) plus a 22/22 live smoke on the running stack. Every mandatory spec item is covered; stretch features present; out-of-scope items absent. No open blockers.

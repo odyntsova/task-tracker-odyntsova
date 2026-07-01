@@ -18,7 +18,7 @@ _Last updated: 2026-06-30_
 | 5 | Comments with author + timestamp | ✅ | ✅ |
 | 6 | Kanban shows tickets in 5 state columns per team | ✅ | ✅ |
 | 7 | Drag to another column updates server, survives refresh | ✅ | ✅ (e2e) |
-| 8 | `docker compose up --build` from repo root | 🔄 config done; not run here (no Docker) |
+| 8 | `podman compose up --build` (or Rancher Desktop) from repo root | 🔄 config done; not run here (no runtime) |
 | 9 | No hard-coded password / committed secret | ✅ |
 | 10 | Fresh DB = schema + migrations only, no seed | ✅ |
 | 11 | QA creates all data via UI/API | ✅ |

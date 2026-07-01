@@ -1,5 +1,7 @@
 # Full local/production-like stack: PostgreSQL + backend API + frontend (nginx).
-#   docker compose up --build
+# Run with an approved OCI runtime (DataArt policy — no Docker Desktop):
+#   podman compose up --build      # Podman / Podman Desktop
+#   docker compose up --build      # Rancher Desktop (drop-in docker CLI)
 #   frontend → http://localhost:8080   (proxies /api to the backend)
 services:
   db:

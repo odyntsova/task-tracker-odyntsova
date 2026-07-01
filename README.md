@@ -6,25 +6,31 @@ Built to the *Hackathon Ticketing System* requirements specification.
 
 ## Stack
 
-- **Frontend:** React + TypeScript + Vite (served by nginx in Docker)
+- **Frontend:** React + TypeScript + Vite (served by nginx in a container)
 - **Backend:** Node.js + Express + TypeScript, Prisma ORM
 - **Database:** PostgreSQL 16
 - **Auth:** local email/password, bcrypt-hashed, JWT bearer tokens, email verification via SMTP
 - **Tests:** Jest (backend unit + integration on a real DB), Playwright (e2e)
 
-## Run with Docker (recommended)
+## Run in containers (recommended)
+
+The stack ships as standard OCI containers (`Dockerfile` + `docker-compose.yml`), so it runs on any compliant container runtime.
+
+> **DataArt policy:** Docker Desktop and other Docker Products are **not approved** for use at DataArt (license limitations). Use an approved runtime instead — [Podman](https://podman.io/) / Podman Desktop or [Rancher Desktop](https://rancherdesktop.io/). Docker *Engine* on Linux (as used by the CI runners) is fine.
 
 From a clean checkout, at the repository root:
 
 ```bash
-docker compose up --build
+podman compose up --build
 ```
+
+Podman reads the same `docker-compose.yml`. (Rancher Desktop also works — it ships a drop-in `docker` CLI, so `docker compose up --build` behaves identically.)
 
 - Frontend → **http://localhost:8080** (nginx proxies `/api` to the backend)
 - Backend API → http://localhost:4000
 - The backend applies database migrations on start. A fresh database contains **no application data** — create teams/epics/tickets through the UI or API.
 
-Only Docker / Docker Compose is required on the host. Override secrets and SMTP via environment variables (see below).
+Only an approved container runtime with Compose support is required on the host. Override secrets and SMTP via environment variables (see below).
 
 ### Configuration (environment variables)
 
@@ -39,12 +45,12 @@ Only Docker / Docker Compose is required on the host. Override secrets and SMTP 
 Example:
 
 ```bash
-JWT_SECRET=super-secret SMTP_HOST=relay1.dataart.com docker compose up --build
+JWT_SECRET=super-secret SMTP_HOST=relay1.dataart.com podman compose up --build
 ```
 
 When `SMTP_HOST` is unset (local dev), verification emails are printed to the backend container logs so you can complete the flow without a mailbox.
 
-## Local development (without Docker)
+## Local development (without containers)
 
 Requires Node.js and a running PostgreSQL.
 

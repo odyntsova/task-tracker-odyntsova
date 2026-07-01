@@ -101,6 +101,16 @@ td {
   color: #067647;
 }
 
+/* The board breaks out of the centered 960px <main> to use the full viewport
+   width (other pages — auth, forms — stay compact). Relies on <main> being
+   horizontally centered. */
+[data-testid='board-page'] {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding-inline: clamp(12px, 4vw, 32px);
+}
+
 /* Kanban board scrolls horizontally on small screens */
 [data-testid='kanban-board'] {
   overflow-x: auto;
